@@ -43,7 +43,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (s != null) rebuildRows();
+        if (s != null) {
+            rebuildRows();
+            if (rows.getChildCount() > 0) rows.getChildAt(0).requestFocus();
+        }
     }
 
     // --- PIN gate ---
@@ -148,6 +151,22 @@ public class MainActivity extends Activity {
 
         setContentView(page);
         rebuildRows();
+        if (rows.getChildCount() > 0) rows.getChildAt(0).requestFocus();
+    }
+
+    private void saveAndRebuild() {
+        int focusIndex = focusedRowIndex();
+        Prefs.saveSettings(this, s);
+        rebuildRows();
+        int restoreTo = Rules.clamp(focusIndex, 0, rows.getChildCount() - 1);
+        if (restoreTo >= 0) rows.getChildAt(restoreTo).requestFocus();
+    }
+
+    private int focusedRowIndex() {
+        for (int i = 0; i < rows.getChildCount(); i++) {
+            if (rows.getChildAt(i).isFocused()) return i;
+        }
+        return 0;
     }
 
     private void rebuildRows() {
@@ -168,8 +187,6 @@ public class MainActivity extends Activity {
         Row pinRow = add(new Row(this, getString(R.string.row_change_pin), null,
                 () -> showPinScreen(R.string.gate_create_pin, null, this::onCreateFirstDigitsEntered), null));
         pinRow.setDetail(isGuardServiceEnabled() ? null : getString(R.string.guard_disabled_warning));
-
-        if (rows.getChildCount() > 0) rows.getChildAt(0).requestFocus();
     }
 
     private void addSection(String label, List<Rules.Window> windows) {
@@ -216,11 +233,6 @@ public class MainActivity extends Activity {
     private Row add(Row r) {
         rows.addView(r, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return r;
-    }
-
-    private void saveAndRebuild() {
-        Prefs.saveSettings(this, s);
-        rebuildRows();
     }
 
     private boolean isGuardServiceEnabled() {

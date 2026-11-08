@@ -28,6 +28,10 @@ public class GuardService extends AccessibilityService {
     private final Handler main = new Handler(Looper.getMainLooper());
     private String foregroundPackage = "";
     private final Runnable tick = this::onTick;
+    /** Set the moment the lock screen is launched, cleared once an allowed app is in front again:
+        a blocked app that keeps trying to reclaim focus must not relaunch the lock screen on top
+        of itself over and over. */
+    private boolean locked = false;
 
     @Override
     protected void onServiceConnected() {
@@ -56,7 +60,10 @@ public class GuardService extends AccessibilityService {
     }
 
     private void check(String pkg) {
-        if (ALWAYS_ALLOWED.contains(pkg)) return;
+        if (ALWAYS_ALLOWED.contains(pkg)) {
+            locked = false;
+            return;
+        }
         long now = System.currentTimeMillis();
         Rules.Settings s = Prefs.loadSettings(this);
         Rules.Decision decision = Rules.evaluate(
@@ -68,7 +75,12 @@ public class GuardService extends AccessibilityService {
                 Prefs.usedSecondsToday(this),
                 Prefs.appOverrideUntil(this, pkg) > now,
                 Prefs.scheduleOverrideUntil(this) > now);
-        if (!decision.blocked()) return;
+        if (!decision.blocked()) {
+            locked = false;
+            return;
+        }
+        if (locked) return;
+        locked = true;
 
         main.removeCallbacks(tick);
         performGlobalAction(GLOBAL_ACTION_HOME);
@@ -77,7 +89,7 @@ public class GuardService extends AccessibilityService {
         lock.putExtra(LockActivity.EXTRA_APP_BLOCKED, decision.appBlocked);
         lock.putExtra(LockActivity.EXTRA_SCHEDULE_BLOCKED, decision.scheduleBlocked);
         lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
-        lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(lock);
     }
 

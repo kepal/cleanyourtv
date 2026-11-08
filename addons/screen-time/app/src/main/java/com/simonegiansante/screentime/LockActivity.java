@@ -1,6 +1,7 @@
 package com.simonegiansante.screentime;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.Gravity;
@@ -34,11 +35,25 @@ public class LockActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        blockedPackage = getIntent().getStringExtra(EXTRA_PACKAGE);
-        appBlocked = getIntent().getBooleanExtra(EXTRA_APP_BLOCKED, false);
-        scheduleBlocked = getIntent().getBooleanExtra(EXTRA_SCHEDULE_BLOCKED, false);
-        quotaBlocked = getIntent().getBooleanExtra(EXTRA_QUOTA_BLOCKED, false);
+        readExtras(getIntent());
         showLock();
+    }
+
+    /** singleTask delivers a repeat launch here instead of a fresh onCreate; redraw with whatever
+        triggered it this time rather than leaving the first screen up unanswered. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        readExtras(intent);
+        showLock();
+    }
+
+    private void readExtras(Intent intent) {
+        blockedPackage = intent.getStringExtra(EXTRA_PACKAGE);
+        appBlocked = intent.getBooleanExtra(EXTRA_APP_BLOCKED, false);
+        scheduleBlocked = intent.getBooleanExtra(EXTRA_SCHEDULE_BLOCKED, false);
+        quotaBlocked = intent.getBooleanExtra(EXTRA_QUOTA_BLOCKED, false);
     }
 
     @Override
