@@ -12,16 +12,20 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.util.List;
+
 /**
  * The tile and module card open this. A PIN gate comes first every time (set one the first time there is
  * none); past it, one list of rows worked with the remote, same shape as the other add-ons here. Left and
- * Right change a value, OK opens a sub-screen.
+ * Right change a value, OK opens a sub-screen or, for a window's own rows, adds or removes it - the row
+ * count changes with the schedule, so the whole list is rebuilt after every edit rather than kept in
+ * fields.
  */
 public class MainActivity extends Activity {
     private Rules.Settings s;
     private String pendingPin;
     private PinPad currentPad;
-    private Row weekdayStartRow, weekdayEndRow, weekendStartRow, weekendEndRow, quotaRow, blacklistRow, pinRow;
+    private LinearLayout rows;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +43,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (s != null) refreshSettings();
+        if (s != null) rebuildRows();
     }
 
     // --- PIN gate ---
@@ -131,7 +135,7 @@ public class MainActivity extends Activity {
         page.addView(title);
 
         ScrollView scroll = new ScrollView(this);
-        LinearLayout rows = new LinearLayout(this);
+        rows = new LinearLayout(this);
         rows.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(rows);
         page.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -142,58 +146,81 @@ public class MainActivity extends Activity {
         hint.setPadding(Math.round(16 * dp), Math.round(12 * dp), 0, 0);
         page.addView(hint);
 
-        weekdayStartRow = add(rows, new Row(this, getString(R.string.row_weekday_start), null, null, d -> {
-            s.weekdayStart += d * Rules.TIME_STEP;
-            changed();
-        }));
-        weekdayEndRow = add(rows, new Row(this, getString(R.string.row_weekday_end), null, null, d -> {
-            s.weekdayEnd += d * Rules.TIME_STEP;
-            changed();
-        }));
-        weekendStartRow = add(rows, new Row(this, getString(R.string.row_weekend_start), null, null, d -> {
-            s.weekendStart += d * Rules.TIME_STEP;
-            changed();
-        }));
-        weekendEndRow = add(rows, new Row(this, getString(R.string.row_weekend_end), null, null, d -> {
-            s.weekendEnd += d * Rules.TIME_STEP;
-            changed();
-        }));
-        quotaRow = add(rows, new Row(this, getString(R.string.row_quota), getString(R.string.row_quota_detail), null, d -> {
-            s.quotaMinutes += d * Rules.QUOTA_STEP;
-            changed();
-        }));
-        blacklistRow = add(rows, new Row(this, getString(R.string.row_blacklist), getString(R.string.row_blacklist_detail),
-                () -> startActivity(new Intent(this, BlacklistActivity.class)), null));
-        pinRow = add(rows, new Row(this, getString(R.string.row_change_pin), null, () -> {
-            showPinScreen(R.string.gate_create_pin, null, this::onCreateFirstDigitsEntered);
-        }, null));
-
         setContentView(page);
-        weekdayStartRow.requestFocus();
-        refreshSettings();
+        rebuildRows();
     }
 
-    private Row add(LinearLayout rows, Row r) {
+    private void rebuildRows() {
+        rows.removeAllViews();
+        addSection(getString(R.string.section_weekday), s.weekdayWindows);
+        addSection(getString(R.string.section_weekend), s.weekendWindows);
+
+        Row quotaRow = add(new Row(this, getString(R.string.row_quota), getString(R.string.row_quota_detail), null, d -> {
+            s.quotaMinutes += d * Rules.QUOTA_STEP;
+            saveAndRebuild();
+        }));
+        quotaRow.setValue(s.quotaMinutes == 0 ? getString(R.string.quota_unlimited) : s.quotaMinutes + " min");
+
+        Row blacklistRow = add(new Row(this, getString(R.string.row_blacklist), getString(R.string.row_blacklist_detail),
+                () -> startActivity(new Intent(this, BlacklistActivity.class)), null));
+        blacklistRow.setValue(String.valueOf(Prefs.loadBlacklist(this).size()));
+
+        Row pinRow = add(new Row(this, getString(R.string.row_change_pin), null,
+                () -> showPinScreen(R.string.gate_create_pin, null, this::onCreateFirstDigitsEntered), null));
+        pinRow.setDetail(isGuardServiceEnabled() ? null : getString(R.string.guard_disabled_warning));
+
+        if (rows.getChildCount() > 0) rows.getChildAt(0).requestFocus();
+    }
+
+    private void addSection(String label, List<Rules.Window> windows) {
+        boolean h24 = DateFormat.is24HourFormat(this);
+        TextView header = new TextView(this);
+        header.setText(label);
+        header.setTextSize(14);
+        header.setTextColor(0xFF8B949E);
+        float dp = getResources().getDisplayMetrics().density;
+        header.setPadding(Math.round(16 * dp), Math.round(12 * dp), 0, Math.round(4 * dp));
+        rows.addView(header, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        for (int i = 0; i < windows.size(); i++) {
+            Rules.Window w = windows.get(i);
+            int position = i;
+            Row startRow = add(new Row(this, getString(R.string.row_window_start, position + 1), null, null, d -> {
+                w.start += d * Rules.TIME_STEP;
+                saveAndRebuild();
+            }));
+            startRow.setValue(Rules.clock(w.start, h24));
+
+            Row endRow = add(new Row(this, getString(R.string.row_window_end, position + 1), null, null, d -> {
+                w.end += d * Rules.TIME_STEP;
+                saveAndRebuild();
+            }));
+            endRow.setValue(Rules.clock(w.end, h24));
+
+            add(new Row(this, getString(R.string.row_window_remove, position + 1), null, () -> {
+                windows.remove(position);
+                saveAndRebuild();
+            }, null));
+        }
+
+        if (windows.size() < Rules.MAX_WINDOWS) {
+            add(new Row(this, getString(R.string.row_window_add), null, () -> {
+                int defaultStart = windows.isEmpty() ? 8 * 60 : windows.get(windows.size() - 1).end;
+                int defaultEnd = Rules.clamp(defaultStart + 60, 0, Rules.DAY_MINUTES - Rules.TIME_STEP);
+                windows.add(new Rules.Window(defaultStart, defaultEnd));
+                saveAndRebuild();
+            }, null));
+        }
+    }
+
+    private Row add(Row r) {
         rows.addView(r, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return r;
     }
 
-    private void changed() {
+    private void saveAndRebuild() {
         Prefs.saveSettings(this, s);
-        refreshSettings();
-    }
-
-    private void refreshSettings() {
-        boolean h24 = DateFormat.is24HourFormat(this);
-        weekdayStartRow.setValue(Rules.clock(s.weekdayStart, h24));
-        weekdayEndRow.setValue(Rules.clock(s.weekdayEnd, h24));
-        weekendStartRow.setValue(Rules.clock(s.weekendStart, h24));
-        weekendEndRow.setValue(Rules.clock(s.weekendEnd, h24));
-        quotaRow.setValue(s.quotaMinutes == 0 ? getString(R.string.quota_unlimited) : s.quotaMinutes + " min");
-        int blocked = Prefs.loadBlacklist(this).size();
-        blacklistRow.setValue(String.valueOf(blocked));
-        boolean guardOn = isGuardServiceEnabled();
-        pinRow.setDetail(guardOn ? null : getString(R.string.guard_disabled_warning));
+        rebuildRows();
     }
 
     private boolean isGuardServiceEnabled() {

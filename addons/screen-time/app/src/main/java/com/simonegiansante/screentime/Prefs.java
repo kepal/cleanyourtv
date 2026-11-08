@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -27,23 +28,41 @@ final class Prefs {
     static Rules.Settings loadSettings(Context c) {
         SharedPreferences p = of(c);
         Rules.Settings s = new Rules.Settings();
-        s.weekdayStart = p.getInt("weekday_start", s.weekdayStart);
-        s.weekdayEnd = p.getInt("weekday_end", s.weekdayEnd);
-        s.weekendStart = p.getInt("weekend_start", s.weekendStart);
-        s.weekendEnd = p.getInt("weekend_end", s.weekendEnd);
+        if (p.contains("weekday_count") || p.contains("weekend_count")) {
+            loadWindows(p, "weekday", s.weekdayWindows);
+            loadWindows(p, "weekend", s.weekendWindows);
+        } else {
+            // First run: one sensible default window per day type, same as before multiple windows existed.
+            s.weekdayWindows.add(new Rules.Window(8 * 60, 20 * 60));
+            s.weekendWindows.add(new Rules.Window(9 * 60, 21 * 60));
+        }
         s.quotaMinutes = p.getInt("quota_minutes", s.quotaMinutes);
         return s.clamped();
     }
 
+    private static void loadWindows(SharedPreferences p, String prefix, List<Rules.Window> into) {
+        int count = Rules.clamp(p.getInt(prefix + "_count", 0), 0, Rules.MAX_WINDOWS);
+        for (int i = 0; i < count; i++) {
+            int start = p.getInt(prefix + "_start_" + i, 8 * 60);
+            int end = p.getInt(prefix + "_end_" + i, 20 * 60);
+            into.add(new Rules.Window(start, end));
+        }
+    }
+
     static void saveSettings(Context c, Rules.Settings s) {
         s.clamped();
-        of(c).edit()
-                .putInt("weekday_start", s.weekdayStart)
-                .putInt("weekday_end", s.weekdayEnd)
-                .putInt("weekend_start", s.weekendStart)
-                .putInt("weekend_end", s.weekendEnd)
-                .putInt("quota_minutes", s.quotaMinutes)
-                .apply();
+        SharedPreferences.Editor e = of(c).edit().putInt("quota_minutes", s.quotaMinutes);
+        saveWindows(e, "weekday", s.weekdayWindows);
+        saveWindows(e, "weekend", s.weekendWindows);
+        e.apply();
+    }
+
+    private static void saveWindows(SharedPreferences.Editor e, String prefix, List<Rules.Window> windows) {
+        e.putInt(prefix + "_count", windows.size());
+        for (int i = 0; i < windows.size(); i++) {
+            e.putInt(prefix + "_start_" + i, windows.get(i).start);
+            e.putInt(prefix + "_end_" + i, windows.get(i).end);
+        }
     }
 
     // --- blacklist ---

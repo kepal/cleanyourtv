@@ -98,9 +98,8 @@ public class LockActivity extends Activity {
         if (scheduleBlocked) {
             boolean h24 = DateFormat.is24HourFormat(this);
             Rules.Settings s = Prefs.loadSettings(this);
-            int start = Prefs.isWeekendToday() ? s.weekendStart : s.weekdayStart;
-            int end = Prefs.isWeekendToday() ? s.weekendEnd : s.weekdayEnd;
-            lines.add(getString(R.string.lock_detail_schedule, Rules.clock(start, h24), Rules.clock(end, h24)));
+            List<Rules.Window> windows = Prefs.isWeekendToday() ? s.weekendWindows : s.weekdayWindows;
+            lines.add(getString(R.string.lock_detail_schedule, Rules.describeWindows(windows, h24)));
         }
         if (quotaBlocked) {
             Rules.Settings s = Prefs.loadSettings(this);

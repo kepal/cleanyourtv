@@ -16,7 +16,7 @@
     <string name="lock_title_multiple">Not available right now</string>
     <string name="lock_detail_app_blocked">This app is on the blocked list.</string>
     <string name="lock_detail_quota">Today\'s %1$d minute limit is reached.</string>
-    <string name="lock_detail_schedule">Allowed from %1$s to %2$s.</string>
+    <string name="lock_detail_schedule">Allowed: %1$s.</string>
     <string name="lock_enter_pin_hint">Enter the PIN to unlock it.</string>
     <string name="lock_duration_title">Unlock for how long?</string>
     <string name="lock_duration_15min">15 minutes</string>
@@ -24,10 +24,12 @@
     <string name="lock_duration_until_reset">Until the next reset</string>
 
     <string name="settings_hint">◀ ▶ change    OK opens    Back closes</string>
-    <string name="row_weekday_start">Weekdays start</string>
-    <string name="row_weekday_end">Weekdays end</string>
-    <string name="row_weekend_start">Weekend start</string>
-    <string name="row_weekend_end">Weekend end</string>
+    <string name="section_weekday">Weekdays</string>
+    <string name="section_weekend">Weekend</string>
+    <string name="row_window_start">Window %1$d starts</string>
+    <string name="row_window_end">Window %1$d ends</string>
+    <string name="row_window_remove">Remove window %1$d</string>
+    <string name="row_window_add">+ Add a window</string>
     <string name="row_quota">Daily limit</string>
     <string name="row_quota_detail">Total screen time allowed per day, outside Home. 0 = no limit.</string>
     <string name="row_blacklist">Blocked apps</string>

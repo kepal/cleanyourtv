@@ -16,7 +16,7 @@
     <string name="lock_title_multiple">Non disponibile ora</string>
     <string name="lock_detail_app_blocked">Questa app è nella lista bloccate.</string>
     <string name="lock_detail_quota">Il limite di oggi (%1$d minuti) è raggiunto.</string>
-    <string name="lock_detail_schedule">Consentito dalle %1$s alle %2$s.</string>
+    <string name="lock_detail_schedule">Consentito: %1$s.</string>
     <string name="lock_enter_pin_hint">Inserisci il PIN per sbloccarla.</string>
     <string name="lock_duration_title">Sblocca per quanto tempo?</string>
     <string name="lock_duration_15min">15 minuti</string>
@@ -24,10 +24,12 @@
     <string name="lock_duration_until_reset">Fino al prossimo reset</string>
 
     <string name="settings_hint">◀ ▶ cambia    OK apre    Indietro chiude</string>
-    <string name="row_weekday_start">Inizio feriali</string>
-    <string name="row_weekday_end">Fine feriali</string>
-    <string name="row_weekend_start">Inizio weekend</string>
-    <string name="row_weekend_end">Fine weekend</string>
+    <string name="section_weekday">Feriali</string>
+    <string name="section_weekend">Weekend</string>
+    <string name="row_window_start">Fascia %1$d: inizio</string>
+    <string name="row_window_end">Fascia %1$d: fine</string>
+    <string name="row_window_remove">Rimuovi fascia %1$d</string>
+    <string name="row_window_add">+ Aggiungi fascia</string>
     <string name="row_quota">Limite giornaliero</string>
     <string name="row_quota_detail">Tempo totale consentito al giorno, fuori dalla Home. 0 = nessun limite.</string>
     <string name="row_blacklist">App bloccate</string>

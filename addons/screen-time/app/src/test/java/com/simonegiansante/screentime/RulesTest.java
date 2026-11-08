@@ -14,7 +14,7 @@ public class RulesTest {
     private static final Set<String> NO_BLACKLIST = Collections.emptySet();
 
     @Test
-    public void inWindow_sameStartEnd_isAlwaysAllowed() {
+    public void inWindow_sameStartEnd_isWholeDay() {
         assertTrue(Rules.inWindow(480, 480, 0));
         assertTrue(Rules.inWindow(480, 480, 1200));
     }
@@ -30,6 +30,23 @@ public class RulesTest {
     public void inWindow_crossesMidnight() {
         assertTrue(Rules.inWindow(1320, 60, 30));     // 22:00-01:00, at 00:30
         assertFalse(Rules.inWindow(1320, 60, 600));   // at 10:00
+    }
+
+    @Test
+    public void noWindows_meansNoScheduleRestriction() {
+        Rules.Settings s = new Rules.Settings(); // both window lists start empty
+        Rules.Decision d = Rules.evaluate("com.example.app", NO_BLACKLIST, false, 0, s, 0, false, false);
+        assertFalse(d.blocked());
+    }
+
+    @Test
+    public void twoWindows_allowedInEither_blockedBetween() {
+        Rules.Settings s = new Rules.Settings();
+        s.weekdayWindows.add(new Rules.Window(8 * 60, 9 * 60));
+        s.weekdayWindows.add(new Rules.Window(16 * 60, 20 * 60));
+        assertFalse(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 8 * 60 + 30, s, 0, false, false).scheduleBlocked);
+        assertFalse(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 18 * 60, s, 0, false, false).scheduleBlocked);
+        assertTrue(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 12 * 60, s, 0, false, false).scheduleBlocked);
     }
 
     @Test
@@ -49,8 +66,7 @@ public class RulesTest {
         Set<String> blacklist = new HashSet<>();
         blacklist.add("com.example.bad");
         Rules.Settings s = new Rules.Settings();
-        s.weekdayStart = 480;
-        s.weekdayEnd = 600; // closed by 10:00
+        s.weekdayWindows.add(new Rules.Window(480, 600)); // closed by 10:00
         Rules.Decision d = Rules.evaluate("com.example.bad", blacklist, false, 900, s, 0, true, false);
         assertFalse(d.appBlocked);
         assertTrue(d.scheduleBlocked);
@@ -61,8 +77,7 @@ public class RulesTest {
         Set<String> blacklist = new HashSet<>();
         blacklist.add("com.example.bad");
         Rules.Settings s = new Rules.Settings();
-        s.weekdayStart = 480;
-        s.weekdayEnd = 600;
+        s.weekdayWindows.add(new Rules.Window(480, 600));
         s.quotaMinutes = 30;
         Rules.Decision d = Rules.evaluate("com.example.bad", blacklist, false, 900, s, 999_999, false, true);
         assertTrue(d.appBlocked);
@@ -89,12 +104,10 @@ public class RulesTest {
     }
 
     @Test
-    public void weekendUsesItsOwnWindow() {
+    public void weekendUsesItsOwnWindows() {
         Rules.Settings s = new Rules.Settings();
-        s.weekdayStart = 480;
-        s.weekdayEnd = 600;   // weekday window closed by 10:00
-        s.weekendStart = 480;
-        s.weekendEnd = 1200;  // weekend window open until 20:00
+        s.weekdayWindows.add(new Rules.Window(480, 600));   // weekday window closed by 10:00
+        s.weekendWindows.add(new Rules.Window(480, 1200));  // weekend window open until 20:00
         Rules.Decision weekday = Rules.evaluate("com.example.app", NO_BLACKLIST, false, 900, s, 0, false, false);
         assertTrue(weekday.scheduleBlocked);
         Rules.Decision weekend = Rules.evaluate("com.example.app", NO_BLACKLIST, true, 900, s, 0, false, false);
@@ -106,10 +119,17 @@ public class RulesTest {
         Set<String> blacklist = new HashSet<>();
         blacklist.add("com.example.bad");
         Rules.Settings s = new Rules.Settings();
-        s.weekdayStart = 480;
-        s.weekdayEnd = 600;
+        s.weekdayWindows.add(new Rules.Window(480, 600));
         Rules.Decision d = Rules.evaluate("com.example.bad", blacklist, false, 900, s, 0, false, false);
         assertEquals(true, d.appBlocked);
         assertEquals(true, d.scheduleBlocked);
+    }
+
+    @Test
+    public void describeWindows_joinsEachRangeWithAComma() {
+        java.util.List<Rules.Window> windows = new java.util.ArrayList<>();
+        windows.add(new Rules.Window(8 * 60, 9 * 60));
+        windows.add(new Rules.Window(16 * 60, 20 * 60));
+        assertEquals("08:00-09:00, 16:00-20:00", Rules.describeWindows(windows, true));
     }
 }
