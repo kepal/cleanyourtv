@@ -183,13 +183,19 @@ public class LockActivity extends Activity {
     }
 
     /** Goes straight back into whatever was blocked, rather than leaving it to whichever task the
-        system happens to bring forward once this one finishes. */
+        system happens to bring forward once this one finishes - explicitly to Home when the blocked
+        package has no ordinary launch intent to reopen (so this never falls through to whatever the
+        system picks instead, which could be this app's own Settings). */
     private void reopenBlockedApp() {
-        if (blockedPackage == null) return;
-        Intent launch = getPackageManager().getLaunchIntentForPackage(blockedPackage);
-        if (launch == null) return;
-        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(launch);
+        Intent launch = blockedPackage != null ? getPackageManager().getLaunchIntentForPackage(blockedPackage) : null;
+        if (launch != null) {
+            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(launch);
+        } else {
+            Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(home);
+        }
     }
 
     @Override
