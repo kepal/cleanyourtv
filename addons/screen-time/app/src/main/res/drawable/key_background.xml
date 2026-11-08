@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A round PIN-pad key: dim until focused, then the launcher's glass highlight. -->
+<!-- A round PIN-pad key: dim until focused, then the app's own accent (#3D7EFF) as a glass highlight. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
         <shape android:shape="oval">
-            <solid android:color="#33FFFFFF" />
-            <stroke android:width="2dp" android:color="#55FFFFFF" />
+            <solid android:color="#553D7EFF" />
+            <stroke android:width="2dp" android:color="#AA3D7EFF" />
         </shape>
     </item>
     <item>

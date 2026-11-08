@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -70,6 +71,13 @@ public class LockActivity extends Activity {
         page.setGravity(Gravity.CENTER);
         page.setBackgroundColor(0xFF0E1420);
         page.setPadding(0, 0, 0, Math.round(24 * dp));
+
+        ImageView badge = new ImageView(this);
+        badge.setImageResource(R.drawable.ic_foreground);
+        int badgeSize = Math.round(64 * dp);
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(badgeSize, badgeSize);
+        badgeParams.bottomMargin = Math.round(12 * dp);
+        page.addView(badge, badgeParams);
 
         TextView title = new TextView(this);
         title.setTextSize(26);
@@ -164,8 +172,14 @@ public class LockActivity extends Activity {
 
     /** durationMillis -1 means "until the next natural reset", at the end of today. */
     private Button durationButton(int labelRes, long durationMillis) {
+        float dp = getResources().getDisplayMetrics().density;
         Button b = new Button(this);
         b.setText(labelRes);
+        b.setTextColor(0xFFFFFFFF);
+        b.setAllCaps(false);
+        b.setBackgroundResource(R.drawable.button_background);
+        b.setMinWidth(Math.round(220 * dp));
+        b.setPadding(Math.round(20 * dp), Math.round(12 * dp), Math.round(20 * dp), Math.round(12 * dp));
         b.setOnClickListener(v -> unlock(durationMillis));
         return b;
     }

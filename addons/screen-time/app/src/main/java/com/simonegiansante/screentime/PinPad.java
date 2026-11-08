@@ -132,7 +132,7 @@ final class PinPad extends LinearLayout {
         for (int i = 0; i < LENGTH; i++) {
             boolean filled = i < entered.length();
             dots[i].setText(filled ? "●" : "○");
-            dots[i].setTextColor(filled ? 0xFFFFFFFF : 0xFF8B949E);
+            dots[i].setTextColor(filled ? 0xFF3D7EFF : 0xFF8B949E);
         }
     }
 }

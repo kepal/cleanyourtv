@@ -13,6 +13,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The tile and module card open this. A PIN gate comes first every time (set one the first time there is
@@ -192,11 +193,12 @@ public class MainActivity extends Activity {
     private void addSection(String label, List<Rules.Window> windows) {
         boolean h24 = DateFormat.is24HourFormat(this);
         TextView header = new TextView(this);
-        header.setText(label);
-        header.setTextSize(14);
-        header.setTextColor(0xFF8B949E);
+        header.setText(label.toUpperCase(Locale.getDefault()));
+        header.setTextSize(13);
+        header.setTextColor(0xFF3D7EFF);
+        header.setLetterSpacing(0.08f);
         float dp = getResources().getDisplayMetrics().density;
-        header.setPadding(Math.round(16 * dp), Math.round(12 * dp), 0, Math.round(4 * dp));
+        header.setPadding(Math.round(16 * dp), Math.round(16 * dp), 0, Math.round(6 * dp));
         rows.addView(header, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         for (int i = 0; i < windows.size(); i++) {

@@ -5,10 +5,12 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-/** Every launchable app, ticked for the ones GuardService always sends back to Home. */
+/** Every launchable app with its own icon, ticked for the ones GuardService always sends back to Home. */
 public class BlacklistActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,27 +52,50 @@ public class BlacklistActivity extends Activity {
 
         Set<String> blacklist = Prefs.loadBlacklist(this);
         String self = getPackageName();
+        boolean first = true;
         for (AppEntry entry : launchableApps()) {
             if (entry.packageName.equals(self) || entry.packageName.equals("com.gathin.tvhome")) continue;
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(Math.round(8 * dp), Math.round(8 * dp), Math.round(8 * dp), Math.round(8 * dp));
-            CheckBox box = new CheckBox(this);
-            box.setChecked(blacklist.contains(entry.packageName));
-            box.setOnCheckedChangeListener((btn, checked) -> {
-                Set<String> current = Prefs.loadBlacklist(this);
-                if (checked) current.add(entry.packageName); else current.remove(entry.packageName);
-                Prefs.saveBlacklist(this, current);
-            });
-            row.addView(box);
+            int pv = Math.round(10 * dp), ph = Math.round(12 * dp);
+            row.setPadding(ph, pv, ph, pv);
+            row.setBackgroundResource(R.drawable.row_background);
+            row.setFocusable(true);
+            row.setClickable(true);
+
+            ImageView icon = new ImageView(this);
+            int iconSize = Math.round(40 * dp);
+            icon.setImageDrawable(entry.icon);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
+            row.addView(icon, iconParams);
+
             TextView label = new TextView(this);
             label.setText(entry.label);
             label.setTextSize(16);
             label.setTextColor(0xFFFFFFFF);
-            label.setPadding(Math.round(12 * dp), 0, 0, 0);
-            row.addView(label);
+            label.setPadding(Math.round(16 * dp), 0, 0, 0);
+            row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            CheckBox box = new CheckBox(this);
+            box.setFocusable(false);
+            box.setClickable(false);
+            box.setChecked(blacklist.contains(entry.packageName));
+            row.addView(box);
+
+            row.setOnClickListener(v -> {
+                boolean nowChecked = !box.isChecked();
+                box.setChecked(nowChecked);
+                Set<String> current = Prefs.loadBlacklist(this);
+                if (nowChecked) current.add(entry.packageName); else current.remove(entry.packageName);
+                Prefs.saveBlacklist(this, current);
+            });
+
             rows.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            if (first) {
+                row.requestFocus();
+                first = false;
+            }
         }
         setContentView(page);
     }
@@ -78,10 +103,12 @@ public class BlacklistActivity extends Activity {
     private static final class AppEntry {
         final String packageName;
         final String label;
+        final Drawable icon;
 
-        AppEntry(String packageName, String label) {
+        AppEntry(String packageName, String label, Drawable icon) {
             this.packageName = packageName;
             this.label = label;
+            this.icon = icon;
         }
     }
 
@@ -97,7 +124,8 @@ public class BlacklistActivity extends Activity {
                 String pkg = app.packageName;
                 if (!seen.add(pkg)) continue;
                 String label = info.loadLabel(pm).toString();
-                byLabel.put(label + "\u0000" + pkg, new AppEntry(pkg, label));
+                Drawable icon = info.loadIcon(pm);
+                byLabel.put(label + "\u0000" + pkg, new AppEntry(pkg, label, icon));
             }
         }
         return new ArrayList<>(byLabel.values());

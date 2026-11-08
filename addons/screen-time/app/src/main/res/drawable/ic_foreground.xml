@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A speaker under a crescent moon inside the adaptive icon's safe zone. Own art. -->
+<!-- A clock face with a small padlock badge, inside the adaptive icon's safe zone. Own art. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#8E7CFF" android:pathData="M36,50h10l12,-10v32l-12,-10h-10z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M66,38a8,8 0 1 0 7,13a6,6 0 1 1 -7,-13z" />
+    <path android:fillColor="#3D7EFF" android:pathData="M48,52m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M48,52L48,34" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M48,52L61,59" />
+    <path android:fillColor="#0E1420" android:pathData="M68,64h22v22h-22z" />
+    <path android:strokeColor="#0E1420" android:strokeWidth="5" android:fillColor="#00000000" android:pathData="M74,64v-7a5,5 0,0 1,10 0v7" />
+    <path android:fillColor="#3D7EFF" android:pathData="M79,75m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#3D7EFF" android:pathData="M77,78h4v6h-4z" />
 </vector>
