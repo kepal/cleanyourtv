@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tempo Schermo</string>
+    <string name="service_label">Guardia Tempo Schermo</string>
+    <string name="service_description">Rimanda alla Home un\'app bloccata e mostra la schermata di blocco, per orario, quota giornaliera o lista nera. Legge solo quale app è in primo piano; nessun contenuto della finestra, nessuna rete.</string>
+
+    <string name="gate_enter_pin">Inserisci il PIN</string>
+    <string name="gate_create_pin">Scegli un PIN a 4 cifre</string>
+    <string name="gate_confirm_pin">Inseriscilo di nuovo</string>
+    <string name="gate_pins_differ">I due PIN non combaciano. Riprova.</string>
+
+    <string name="lock_wrong_pin">PIN errato.</string>
+    <string name="lock_title_app_blocked">App non consentita</string>
+    <string name="lock_title_quota">Tempo schermo di oggi esaurito</string>
+    <string name="lock_title_schedule">Non disponibile ora</string>
+    <string name="lock_detail_app_blocked">Chiedi a chi ha impostato Tempo Schermo di toglierla dalla lista bloccate.</string>
+    <string name="lock_detail_quota">Il limite di oggi (%1$d minuti) è raggiunto. Inserisci il PIN per continuare oggi.</string>
+    <string name="lock_detail_schedule">Consentito dalle %1$s alle %2$s. Inserisci il PIN per usarla comunque ora.</string>
+    <string name="lock_back_to_home">Torna alla Home</string>
+
+    <string name="settings_hint">◀ ▶ cambia    OK apre    Indietro chiude</string>
+    <string name="row_weekday_start">Inizio feriali</string>
+    <string name="row_weekday_end">Fine feriali</string>
+    <string name="row_weekend_start">Inizio weekend</string>
+    <string name="row_weekend_end">Fine weekend</string>
+    <string name="row_quota">Limite giornaliero</string>
+    <string name="row_quota_detail">Tempo totale consentito al giorno, fuori dalla Home. 0 = nessun limite.</string>
+    <string name="row_blacklist">App bloccate</string>
+    <string name="row_blacklist_detail">Sempre bloccate, in ogni momento, senza sblocco con PIN qui.</string>
+    <string name="row_change_pin">Cambia PIN</string>
+    <string name="quota_unlimited">Nessun limite</string>
+    <string name="guard_disabled_warning">La guardia non è attiva in Accessibilità: nessuna regola è applicata.</string>
+    <string name="blacklist_hint">Le app spuntate vengono sempre rimandate alla Home.</string>
+</resources>

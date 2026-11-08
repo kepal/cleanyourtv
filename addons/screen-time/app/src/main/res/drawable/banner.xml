@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 16:9 banner: a clock face with hands at ten past nine, a small lock badge at its bottom right. Own art. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="180dp"
+    android:viewportWidth="320" android:viewportHeight="180">
+    <path android:fillColor="#0E1420" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#1A2436" android:strokeColor="#3D7EFF" android:strokeWidth="4" android:pathData="M90,90m-58,0a58,58 0,1 1,116 0a58,58 0,1 1,-116 0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:fillColor="#00000000" android:pathData="M90,90L90,52" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:fillColor="#00000000" android:pathData="M90,90L116,100" />
+    <path android:fillColor="#FFFFFF" android:pathData="M90,90m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#3D7EFF" android:pathData="M210,54h80v90h-80z" />
+    <path android:strokeColor="#3D7EFF" android:strokeWidth="8" android:fillColor="#00000000" android:pathData="M222,54v-14a28,28 0,0 1,56 0v14" />
+    <path android:fillColor="#0E1420" android:pathData="M250,96m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+    <path android:fillColor="#0E1420" android:pathData="M246,104h8v16h-8z" />
+</vector>

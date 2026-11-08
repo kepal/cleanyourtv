@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Screen Time</string>
+    <string name="service_label">Screen Time Guard</string>
+    <string name="service_description">Sends a blocked app back to Home and shows the lock screen, by schedule, daily quota or blacklist. Reads only which app is in front; no window content, no network.</string>
+
+    <string name="gate_enter_pin">Enter the PIN</string>
+    <string name="gate_create_pin">Choose a 4-digit PIN</string>
+    <string name="gate_confirm_pin">Enter it again</string>
+    <string name="gate_pins_differ">The two PINs did not match. Try again.</string>
+
+    <string name="lock_wrong_pin">Wrong PIN.</string>
+    <string name="lock_title_app_blocked">This app is not allowed</string>
+    <string name="lock_title_quota">Today\'s screen time is used up</string>
+    <string name="lock_title_schedule">Not available right now</string>
+    <string name="lock_detail_app_blocked">Ask whoever set up Screen Time to remove it from the blocked list.</string>
+    <string name="lock_detail_quota">Today\'s %1$d minute limit is reached. Enter the PIN to keep going today.</string>
+    <string name="lock_detail_schedule">Allowed from %1$s to %2$s. Enter the PIN to use it now anyway.</string>
+    <string name="lock_back_to_home">Back to Home</string>
+
+    <string name="settings_hint">◀ ▶ change    OK opens    Back closes</string>
+    <string name="row_weekday_start">Weekdays start</string>
+    <string name="row_weekday_end">Weekdays end</string>
+    <string name="row_weekend_start">Weekend start</string>
+    <string name="row_weekend_end">Weekend end</string>
+    <string name="row_quota">Daily limit</string>
+    <string name="row_quota_detail">Total screen time allowed per day, outside Home. 0 = no limit.</string>
+    <string name="row_blacklist">Blocked apps</string>
+    <string name="row_blacklist_detail">Always blocked, at any time, with no PIN bypass here.</string>
+    <string name="row_change_pin">Change PIN</string>
+    <string name="quota_unlimited">No limit</string>
+    <string name="guard_disabled_warning">The guard is not enabled in Accessibility: nothing is enforced yet.</string>
+    <string name="blacklist_hint">Ticked apps are always sent back to Home.</string>
+</resources>
