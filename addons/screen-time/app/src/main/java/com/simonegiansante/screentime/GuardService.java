@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Watches which app is in front and enforces the schedule, the daily quota and the blacklist. A blacklisted
+ * Watches which app is in front and enforces the schedule, the daily quota and the blacklist. A blocked
  * app is sent back to Home the moment it appears; the schedule and the quota are also re-checked every
  * TICK_SECONDS while an ordinary (non-exempt) app sits in front, so a window that was open before the
  * schedule ended or the quota ran out is caught too, not only a newly opened one.
@@ -57,21 +57,26 @@ public class GuardService extends AccessibilityService {
 
     private void check(String pkg) {
         if (ALWAYS_ALLOWED.contains(pkg)) return;
+        long now = System.currentTimeMillis();
         Rules.Settings s = Prefs.loadSettings(this);
-        Rules.Reason reason = Rules.evaluate(
+        Rules.Decision decision = Rules.evaluate(
                 pkg,
                 Prefs.loadBlacklist(this),
                 Prefs.isWeekendToday(),
                 Prefs.nowMinutes(),
                 s,
                 Prefs.usedSecondsToday(this),
-                Prefs.overrideActiveToday(this));
-        if (reason == Rules.Reason.ALLOWED) return;
+                Prefs.appOverrideUntil(this, pkg) > now,
+                Prefs.scheduleOverrideUntil(this) > now);
+        if (!decision.blocked()) return;
 
         main.removeCallbacks(tick);
         performGlobalAction(GLOBAL_ACTION_HOME);
         Intent lock = new Intent(this, LockActivity.class);
-        lock.putExtra(LockActivity.EXTRA_REASON, reason.name());
+        lock.putExtra(LockActivity.EXTRA_PACKAGE, pkg);
+        lock.putExtra(LockActivity.EXTRA_APP_BLOCKED, decision.appBlocked);
+        lock.putExtra(LockActivity.EXTRA_SCHEDULE_BLOCKED, decision.scheduleBlocked);
+        lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
         lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(lock);
     }

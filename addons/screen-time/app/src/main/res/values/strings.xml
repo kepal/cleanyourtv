@@ -13,10 +13,15 @@
     <string name="lock_title_app_blocked">This app is not allowed</string>
     <string name="lock_title_quota">Today\'s screen time is used up</string>
     <string name="lock_title_schedule">Not available right now</string>
-    <string name="lock_detail_app_blocked">Ask whoever set up Screen Time to remove it from the blocked list.</string>
-    <string name="lock_detail_quota">Today\'s %1$d minute limit is reached. Enter the PIN to keep going today.</string>
-    <string name="lock_detail_schedule">Allowed from %1$s to %2$s. Enter the PIN to use it now anyway.</string>
-    <string name="lock_back_to_home">Back to Home</string>
+    <string name="lock_title_multiple">Not available right now</string>
+    <string name="lock_detail_app_blocked">This app is on the blocked list.</string>
+    <string name="lock_detail_quota">Today\'s %1$d minute limit is reached.</string>
+    <string name="lock_detail_schedule">Allowed from %1$s to %2$s.</string>
+    <string name="lock_enter_pin_hint">Enter the PIN to unlock it.</string>
+    <string name="lock_duration_title">Unlock for how long?</string>
+    <string name="lock_duration_15min">15 minutes</string>
+    <string name="lock_duration_1hour">1 hour</string>
+    <string name="lock_duration_until_reset">Until the next reset</string>
 
     <string name="settings_hint">◀ ▶ change    OK opens    Back closes</string>
     <string name="row_weekday_start">Weekdays start</string>
@@ -26,7 +31,7 @@
     <string name="row_quota">Daily limit</string>
     <string name="row_quota_detail">Total screen time allowed per day, outside Home. 0 = no limit.</string>
     <string name="row_blacklist">Blocked apps</string>
-    <string name="row_blacklist_detail">Always blocked, at any time, with no PIN bypass here.</string>
+    <string name="row_blacklist_detail">The PIN can still unlock one, for a chosen time, from the lock screen.</string>
     <string name="row_change_pin">Change PIN</string>
     <string name="quota_unlimited">No limit</string>
     <string name="guard_disabled_warning">The guard is not enabled in Accessibility: nothing is enforced yet.</string>

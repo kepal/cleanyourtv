@@ -4,36 +4,51 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Full screen, shown over Home whenever GuardService sends an app back. A blacklisted app has no PIN
- * field here at all: the only way past it is removing the app from the blacklist in Settings, which
- * needs the PIN anyway. Outside the schedule or past today's quota, the PIN lifts both for the rest of
- * the calendar day.
+ * Full screen, shown over Home whenever GuardService sends an app back. Always explains why and always
+ * offers the PIN: a short unlock (15 minutes or 1 hour) or until the next natural reset at midnight. What
+ * the PIN actually lifts follows what is blocking right now - the schedule and the quota together
+ * (scheduleBlocked or quotaBlocked), the one package that triggered a blacklist hit (appBlocked), or both
+ * at once, never more.
  */
 public class LockActivity extends Activity {
-    static final String EXTRA_REASON = "reason";
+    static final String EXTRA_PACKAGE = "package";
+    static final String EXTRA_APP_BLOCKED = "app_blocked";
+    static final String EXTRA_SCHEDULE_BLOCKED = "schedule_blocked";
+    static final String EXTRA_QUOTA_BLOCKED = "quota_blocked";
 
+    private boolean appBlocked, scheduleBlocked, quotaBlocked;
+    private String blockedPackage;
     private TextView error;
     private PinPad pad;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Rules.Reason reason;
-        try {
-            reason = Rules.Reason.valueOf(getIntent().getStringExtra(EXTRA_REASON));
-        } catch (IllegalArgumentException | NullPointerException e) {
-            reason = Rules.Reason.OUTSIDE_SCHEDULE;
-        }
-        setContentView(build(reason));
+        blockedPackage = getIntent().getStringExtra(EXTRA_PACKAGE);
+        appBlocked = getIntent().getBooleanExtra(EXTRA_APP_BLOCKED, false);
+        scheduleBlocked = getIntent().getBooleanExtra(EXTRA_SCHEDULE_BLOCKED, false);
+        quotaBlocked = getIntent().getBooleanExtra(EXTRA_QUOTA_BLOCKED, false);
+        showLock();
     }
 
-    private ViewGroup build(Rules.Reason reason) {
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (pad != null && pad.handleKeyEvent(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+    private void showLock() {
+        pad = null;
         float dp = getResources().getDisplayMetrics().density;
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
@@ -45,9 +60,7 @@ public class LockActivity extends Activity {
         title.setTextSize(26);
         title.setTextColor(0xFFFFFFFF);
         title.setGravity(Gravity.CENTER);
-        title.setText(reason == Rules.Reason.APP_BLOCKED ? R.string.lock_title_app_blocked
-                : reason == Rules.Reason.QUOTA_EXCEEDED ? R.string.lock_title_quota
-                : R.string.lock_title_schedule);
+        title.setText(titleFor());
         page.addView(title, matchWidthWrap());
 
         TextView detail = new TextView(this);
@@ -55,52 +68,103 @@ public class LockActivity extends Activity {
         detail.setTextColor(0xFF8B949E);
         detail.setGravity(Gravity.CENTER);
         detail.setPadding(Math.round(32 * dp), Math.round(8 * dp), Math.round(32 * dp), Math.round(24 * dp));
-        detail.setText(detailFor(reason));
+        detail.setText(detailFor());
         page.addView(detail, matchWidthWrap());
 
-        if (reason == Rules.Reason.APP_BLOCKED) {
-            Button home = new Button(this);
-            home.setText(R.string.lock_back_to_home);
-            home.setOnClickListener(v -> finish());
-            page.addView(home, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            home.requestFocus();
-        } else {
-            error = new TextView(this);
-            error.setTextSize(14);
-            error.setTextColor(0xFFE05555);
-            error.setGravity(Gravity.CENTER);
-            error.setPadding(0, 0, 0, Math.round(8 * dp));
-            page.addView(error, matchWidthWrap());
+        error = new TextView(this);
+        error.setTextSize(14);
+        error.setTextColor(0xFFE05555);
+        error.setGravity(Gravity.CENTER);
+        error.setPadding(0, 0, 0, Math.round(8 * dp));
+        page.addView(error, matchWidthWrap());
 
-            pad = new PinPad(this, this::onPinEntered);
-            page.addView(pad, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        }
-        return page;
+        pad = new PinPad(this, this::onPinEntered);
+        page.addView(pad, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        setContentView(page);
     }
 
-    private String detailFor(Rules.Reason reason) {
-        boolean h24 = DateFormat.is24HourFormat(this);
-        Rules.Settings s = Prefs.loadSettings(this);
-        int end = Prefs.isWeekendToday() ? s.weekendEnd : s.weekdayEnd;
-        int start = Prefs.isWeekendToday() ? s.weekendStart : s.weekdayStart;
-        switch (reason) {
-            case APP_BLOCKED:
-                return getString(R.string.lock_detail_app_blocked);
-            case QUOTA_EXCEEDED:
-                return getString(R.string.lock_detail_quota, s.quotaMinutes);
-            default:
-                return getString(R.string.lock_detail_schedule, Rules.clock(start, h24), Rules.clock(end, h24));
+    private String titleFor() {
+        List<Integer> parts = new ArrayList<>();
+        if (appBlocked) parts.add(R.string.lock_title_app_blocked);
+        if (scheduleBlocked) parts.add(R.string.lock_title_schedule);
+        if (quotaBlocked) parts.add(R.string.lock_title_quota);
+        if (parts.size() == 1) return getString(parts.get(0));
+        return getString(R.string.lock_title_multiple);
+    }
+
+    private String detailFor() {
+        List<String> lines = new ArrayList<>();
+        if (appBlocked) lines.add(getString(R.string.lock_detail_app_blocked));
+        if (scheduleBlocked) {
+            boolean h24 = DateFormat.is24HourFormat(this);
+            Rules.Settings s = Prefs.loadSettings(this);
+            int start = Prefs.isWeekendToday() ? s.weekendStart : s.weekdayStart;
+            int end = Prefs.isWeekendToday() ? s.weekendEnd : s.weekdayEnd;
+            lines.add(getString(R.string.lock_detail_schedule, Rules.clock(start, h24), Rules.clock(end, h24)));
         }
+        if (quotaBlocked) {
+            Rules.Settings s = Prefs.loadSettings(this);
+            lines.add(getString(R.string.lock_detail_quota, s.quotaMinutes));
+        }
+        lines.add(getString(R.string.lock_enter_pin_hint));
+        return String.join("\n", lines);
     }
 
     private void onPinEntered(String pin) {
         if (Prefs.checkPin(this, pin)) {
-            Prefs.setOverrideToday(this);
-            finish();
+            showDurationPicker();
         } else {
             error.setText(R.string.lock_wrong_pin);
             pad.reset();
         }
+    }
+
+    private void showDurationPicker() {
+        pad = null;
+        float dp = getResources().getDisplayMetrics().density;
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setGravity(Gravity.CENTER);
+        page.setBackgroundColor(0xFF0E1420);
+
+        TextView title = new TextView(this);
+        title.setTextSize(22);
+        title.setTextColor(0xFFFFFFFF);
+        title.setGravity(Gravity.CENTER);
+        title.setText(R.string.lock_duration_title);
+        page.addView(title, matchWidthWrap());
+
+        page.addView(durationButton(R.string.lock_duration_15min, 15 * 60_000L), buttonParams(dp));
+        page.addView(durationButton(R.string.lock_duration_1hour, 60 * 60_000L), buttonParams(dp));
+        page.addView(durationButton(R.string.lock_duration_until_reset, -1), buttonParams(dp));
+
+        setContentView(page);
+        page.getChildAt(1).requestFocus();
+    }
+
+    private LinearLayout.LayoutParams buttonParams(float dp) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Math.round(12 * dp);
+        return lp;
+    }
+
+    /** durationMillis -1 means "until the next natural reset", at the end of today. */
+    private Button durationButton(int labelRes, long durationMillis) {
+        Button b = new Button(this);
+        b.setText(labelRes);
+        b.setOnClickListener(v -> unlock(durationMillis));
+        return b;
+    }
+
+    private void unlock(long durationMillis) {
+        long until = durationMillis < 0 ? Prefs.endOfTodayMillis() : System.currentTimeMillis() + durationMillis;
+        if (scheduleBlocked || quotaBlocked) {
+            Prefs.setScheduleOverrideUntil(this, until);
+        }
+        if (appBlocked && blockedPackage != null) {
+            Prefs.setAppOverrideUntil(this, blockedPackage, until);
+        }
+        finish();
     }
 
     @Override

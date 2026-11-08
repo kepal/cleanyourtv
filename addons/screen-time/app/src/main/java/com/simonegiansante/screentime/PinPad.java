@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -106,6 +107,25 @@ final class PinPad extends LinearLayout {
     void reset() {
         entered.setLength(0);
         refresh();
+    }
+
+    /**
+     * Lets a digit key (0-9) or delete on the remote itself work, not only moving focus to the grid and
+     * pressing OK. The hosting Activity forwards key-down events here from its own dispatchKeyEvent.
+     * True means it was a PIN key and was used; the caller sends anything else on as usual.
+     */
+    boolean handleKeyEvent(KeyEvent event) {
+        if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        int code = event.getKeyCode();
+        if (code >= KeyEvent.KEYCODE_0 && code <= KeyEvent.KEYCODE_9) {
+            digit(String.valueOf(code - KeyEvent.KEYCODE_0));
+            return true;
+        }
+        if (code == KeyEvent.KEYCODE_DEL || code == KeyEvent.KEYCODE_FORWARD_DEL) {
+            backspace();
+            return true;
+        }
+        return false;
     }
 
     private void refresh() {

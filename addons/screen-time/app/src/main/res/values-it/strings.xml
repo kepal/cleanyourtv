@@ -13,10 +13,15 @@
     <string name="lock_title_app_blocked">App non consentita</string>
     <string name="lock_title_quota">Tempo schermo di oggi esaurito</string>
     <string name="lock_title_schedule">Non disponibile ora</string>
-    <string name="lock_detail_app_blocked">Chiedi a chi ha impostato Tempo Schermo di toglierla dalla lista bloccate.</string>
-    <string name="lock_detail_quota">Il limite di oggi (%1$d minuti) è raggiunto. Inserisci il PIN per continuare oggi.</string>
-    <string name="lock_detail_schedule">Consentito dalle %1$s alle %2$s. Inserisci il PIN per usarla comunque ora.</string>
-    <string name="lock_back_to_home">Torna alla Home</string>
+    <string name="lock_title_multiple">Non disponibile ora</string>
+    <string name="lock_detail_app_blocked">Questa app è nella lista bloccate.</string>
+    <string name="lock_detail_quota">Il limite di oggi (%1$d minuti) è raggiunto.</string>
+    <string name="lock_detail_schedule">Consentito dalle %1$s alle %2$s.</string>
+    <string name="lock_enter_pin_hint">Inserisci il PIN per sbloccarla.</string>
+    <string name="lock_duration_title">Sblocca per quanto tempo?</string>
+    <string name="lock_duration_15min">15 minuti</string>
+    <string name="lock_duration_1hour">1 ora</string>
+    <string name="lock_duration_until_reset">Fino al prossimo reset</string>
 
     <string name="settings_hint">◀ ▶ cambia    OK apre    Indietro chiude</string>
     <string name="row_weekday_start">Inizio feriali</string>
@@ -26,7 +31,7 @@
     <string name="row_quota">Limite giornaliero</string>
     <string name="row_quota_detail">Tempo totale consentito al giorno, fuori dalla Home. 0 = nessun limite.</string>
     <string name="row_blacklist">App bloccate</string>
-    <string name="row_blacklist_detail">Sempre bloccate, in ogni momento, senza sblocco con PIN qui.</string>
+    <string name="row_blacklist_detail">Il PIN può comunque sbloccarne una, per un tempo scelto, dalla schermata di blocco.</string>
     <string name="row_change_pin">Cambia PIN</string>
     <string name="quota_unlimited">Nessun limite</string>
     <string name="guard_disabled_warning">La guardia non è attiva in Accessibilità: nessuna regola è applicata.</string>

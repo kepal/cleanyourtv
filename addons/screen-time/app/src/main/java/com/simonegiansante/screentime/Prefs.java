@@ -103,12 +103,31 @@ final class Prefs {
         p.edit().putString("usage_day", day).putInt("usage_seconds", current + seconds).apply();
     }
 
-    /** True once a correct PIN has lifted the schedule/quota block for the rest of today. Never lifts the blacklist. */
-    static boolean overrideActiveToday(Context c) {
-        return today().equals(of(c).getString("override_day", ""));
+    /** A correct PIN lifts the schedule and the quota together, until this moment (epoch millis, 0 = none active). */
+    static long scheduleOverrideUntil(Context c) {
+        return of(c).getLong("schedule_override_until", 0L);
     }
 
-    static void setOverrideToday(Context c) {
-        of(c).edit().putString("override_day", today()).apply();
+    static void setScheduleOverrideUntil(Context c, long untilMillis) {
+        of(c).edit().putLong("schedule_override_until", untilMillis).apply();
+    }
+
+    /** The same, but for one blacklisted package only; never lifts the schedule or the quota. */
+    static long appOverrideUntil(Context c, String packageName) {
+        return of(c).getLong("app_override_" + packageName, 0L);
+    }
+
+    static void setAppOverrideUntil(Context c, String packageName, long untilMillis) {
+        of(c).edit().putLong("app_override_" + packageName, untilMillis).apply();
+    }
+
+    /** Midnight at the end of the current calendar day, for the "until the next block" choice. */
+    static long endOfTodayMillis() {
+        Calendar end = Calendar.getInstance();
+        end.set(Calendar.HOUR_OF_DAY, 23);
+        end.set(Calendar.MINUTE, 59);
+        end.set(Calendar.SECOND, 59);
+        end.set(Calendar.MILLISECOND, 999);
+        return end.getTimeInMillis();
     }
 }

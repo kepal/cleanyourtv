@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -19,12 +20,20 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
     private Rules.Settings s;
     private String pendingPin;
+    private PinPad currentPad;
     private Row weekdayStartRow, weekdayEndRow, weekendStartRow, weekendEndRow, quotaRow, blacklistRow, pinRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         showGate();
+    }
+
+    /** Lets the remote's own number keys type a PIN, not only moving focus to the grid. */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (currentPad != null && currentPad.handleKeyEvent(event)) return true;
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
@@ -97,6 +106,7 @@ public class MainActivity extends Activity {
 
         PinPad[] padHolder = new PinPad[1];
         padHolder[0] = new PinPad(this, pin -> step.onEntered(pin, error, padHolder[0]));
+        currentPad = padHolder[0];
         LinearLayout.LayoutParams padParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         padParams.topMargin = Math.round(16 * dp);
         page.addView(padHolder[0], padParams);
@@ -107,6 +117,7 @@ public class MainActivity extends Activity {
     // --- settings ---
 
     private void showSettings() {
+        currentPad = null;
         s = Prefs.loadSettings(this);
         float dp = getResources().getDisplayMetrics().density;
         LinearLayout page = new LinearLayout(this);
@@ -187,8 +198,12 @@ public class MainActivity extends Activity {
 
     private boolean isGuardServiceEnabled() {
         String enabled = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        ComponentName mine = new ComponentName(this, GuardService.class);
-        return enabled != null && enabled.contains(mine.flattenToString());
+        if (enabled == null) return false;
+        // The setting is free-form text: some writers use the full class name, others the manifest's
+        // own shorthand ("pkg/.GuardService"), so both must be checked.
+        ComponentName full = new ComponentName(this, GuardService.class);
+        String shorthand = getPackageName() + "/." + GuardService.class.getSimpleName();
+        return enabled.contains(full.flattenToString()) || enabled.contains(shorthand);
     }
 
     private LinearLayout.LayoutParams wrap() {

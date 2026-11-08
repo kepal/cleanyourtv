@@ -7,13 +7,13 @@ import java.util.Set;
  * The settings and the decision, with no Android types, so the JVM tests cover all of it: whether a package
  * may be in front right now, given the day's window, today's quota and the blacklist. The launcher
  * (com.gathin.tvhome) and this app's own package are never evaluated at all: see GuardService.ALWAYS_ALLOWED.
+ * The three restrictions are independent, so a moment can be blocked by more than one at once (an app that
+ * is both blacklisted and outside the schedule): the caller unlocks exactly the ones that applied.
  */
 final class Rules {
     static final int DAY_MINUTES = 24 * 60;
-    static final int TIME_STEP = 15;
-    static final int QUOTA_STEP = 15;
-
-    enum Reason { ALLOWED, APP_BLOCKED, OUTSIDE_SCHEDULE, QUOTA_EXCEEDED }
+    static final int TIME_STEP = 5;
+    static final int QUOTA_STEP = 5;
 
     static final class Settings {
         int weekdayStart = 8 * 60;
@@ -33,6 +33,23 @@ final class Rules {
         }
     }
 
+    /** Which restrictions apply right now; none of the three imply each other. */
+    static final class Decision {
+        final boolean appBlocked;
+        final boolean scheduleBlocked;
+        final boolean quotaBlocked;
+
+        Decision(boolean appBlocked, boolean scheduleBlocked, boolean quotaBlocked) {
+            this.appBlocked = appBlocked;
+            this.scheduleBlocked = scheduleBlocked;
+            this.quotaBlocked = quotaBlocked;
+        }
+
+        boolean blocked() {
+            return appBlocked || scheduleBlocked || quotaBlocked;
+        }
+    }
+
     private Rules() {
     }
 
@@ -42,15 +59,25 @@ final class Rules {
         return start < end ? minute >= start && minute < end : minute >= start || minute < end;
     }
 
-    static Reason evaluate(String foregroundPackage, Set<String> blacklist, boolean isWeekend, int nowMinutes,
-                            Settings s, int usedSecondsToday, boolean overrideActive) {
-        if (blacklist.contains(foregroundPackage)) return Reason.APP_BLOCKED;
-        if (overrideActive) return Reason.ALLOWED;
-        int start = isWeekend ? s.weekendStart : s.weekdayStart;
-        int end = isWeekend ? s.weekendEnd : s.weekdayEnd;
-        if (!inWindow(start, end, nowMinutes)) return Reason.OUTSIDE_SCHEDULE;
-        if (s.quotaMinutes > 0 && usedSecondsToday >= s.quotaMinutes * 60) return Reason.QUOTA_EXCEEDED;
-        return Reason.ALLOWED;
+    /**
+     * appOverridden: a standing PIN unlock for this exact package lifts the blacklist for it.
+     * scheduleOverridden: a standing PIN unlock lifts both the schedule window and the quota.
+     */
+    static Decision evaluate(String foregroundPackage, Set<String> blacklist, boolean isWeekend, int nowMinutes,
+                              Settings s, int usedSecondsToday, boolean appOverridden, boolean scheduleOverridden) {
+        boolean appBlocked = blacklist.contains(foregroundPackage) && !appOverridden;
+        boolean scheduleBlocked = false;
+        boolean quotaBlocked = false;
+        if (!scheduleOverridden) {
+            int start = isWeekend ? s.weekendStart : s.weekdayStart;
+            int end = isWeekend ? s.weekendEnd : s.weekdayEnd;
+            if (!inWindow(start, end, nowMinutes)) {
+                scheduleBlocked = true;
+            } else if (s.quotaMinutes > 0 && usedSecondsToday >= s.quotaMinutes * 60) {
+                quotaBlocked = true;
+            }
+        }
+        return new Decision(appBlocked, scheduleBlocked, quotaBlocked);
     }
 
     static String clock(int minute, boolean h24) {
