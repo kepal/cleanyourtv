@@ -178,7 +178,18 @@ public class LockActivity extends Activity {
         if (appBlocked && blockedPackage != null) {
             Prefs.setAppOverrideUntil(this, blockedPackage, until);
         }
+        reopenBlockedApp();
         finish();
+    }
+
+    /** Goes straight back into whatever was blocked, rather than leaving it to whichever task the
+        system happens to bring forward once this one finishes. */
+    private void reopenBlockedApp() {
+        if (blockedPackage == null) return;
+        Intent launch = getPackageManager().getLaunchIntentForPackage(blockedPackage);
+        if (launch == null) return;
+        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(launch);
     }
 
     @Override

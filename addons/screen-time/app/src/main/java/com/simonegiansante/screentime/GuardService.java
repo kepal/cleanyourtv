@@ -95,7 +95,7 @@ public class GuardService extends AccessibilityService {
             lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
             lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(lock);
-        }, 400);
+        }, 150);
     }
 
     @Override
