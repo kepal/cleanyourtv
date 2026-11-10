@@ -43,6 +43,9 @@ public class GuardService extends AccessibilityService {
         if (event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
         CharSequence pkg = event.getPackageName();
         if (pkg == null) return;
+        // Volume bar, panels and notifications draw over the app without replacing it, and raise no
+        // event when they go away: letting one stand in as "the app in front" would stop the timer.
+        if ("com.android.systemui".contentEquals(pkg)) return;
         foregroundPackage = pkg.toString();
         main.removeCallbacks(tick);
         check(foregroundPackage);
