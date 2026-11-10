@@ -50,6 +50,35 @@ public class LockActivity extends Activity {
         showLock();
     }
 
+    /** The lock screen can outlive the block that raised it (left up overnight through standby, a window
+        opening at 7 while it is still showing): drop it as soon as nothing blocks any more. */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (pad == null) return;
+        long now = System.currentTimeMillis();
+        String pkg = blockedPackage != null ? blockedPackage : "";
+        Rules.Decision d = Rules.evaluate(
+                pkg,
+                Prefs.loadBlacklist(this),
+                Prefs.isWeekendToday(),
+                Prefs.nowMinutes(),
+                Prefs.loadSettings(this),
+                Prefs.usedSecondsToday(this),
+                Prefs.appOverrideUntil(this, pkg) > now,
+                Prefs.scheduleOverrideUntil(this) > now);
+        if (!d.blocked()) {
+            finish();
+            return;
+        }
+        if (d.appBlocked != appBlocked || d.scheduleBlocked != scheduleBlocked || d.quotaBlocked != quotaBlocked) {
+            appBlocked = d.appBlocked;
+            scheduleBlocked = d.scheduleBlocked;
+            quotaBlocked = d.quotaBlocked;
+            showLock();
+        }
+    }
+
     private void readExtras(Intent intent) {
         blockedPackage = intent.getStringExtra(EXTRA_PACKAGE);
         appBlocked = intent.getBooleanExtra(EXTRA_APP_BLOCKED, false);
