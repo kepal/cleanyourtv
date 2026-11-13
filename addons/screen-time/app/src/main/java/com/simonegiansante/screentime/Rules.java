@@ -48,15 +48,18 @@ final class Rules {
         final boolean appBlocked;
         final boolean scheduleBlocked;
         final boolean quotaBlocked;
+        /** This one app has used up its own daily limit. */
+        final boolean appLimitBlocked;
 
-        Decision(boolean appBlocked, boolean scheduleBlocked, boolean quotaBlocked) {
+        Decision(boolean appBlocked, boolean scheduleBlocked, boolean quotaBlocked, boolean appLimitBlocked) {
             this.appBlocked = appBlocked;
             this.scheduleBlocked = scheduleBlocked;
             this.quotaBlocked = quotaBlocked;
+            this.appLimitBlocked = appLimitBlocked;
         }
 
         boolean blocked() {
-            return appBlocked || scheduleBlocked || quotaBlocked;
+            return appBlocked || scheduleBlocked || quotaBlocked || appLimitBlocked;
         }
     }
 
@@ -84,6 +87,18 @@ final class Rules {
      */
     static Decision evaluate(String foregroundPackage, Set<String> blacklist, boolean isWeekend, int nowMinutes,
                               Settings s, int usedSecondsToday, boolean appOverridden, boolean scheduleOverridden) {
+        return evaluate(foregroundPackage, blacklist, isWeekend, nowMinutes, s, usedSecondsToday, 0, 0,
+                appOverridden, scheduleOverridden);
+    }
+
+    /**
+     * appLimitMinutes is this package's own daily limit (0 = none) and appUsedSeconds what it has used today.
+     * The same appOverridden unlock that lifts the blacklist lifts this limit too, for that package only.
+     */
+    static Decision evaluate(String foregroundPackage, Set<String> blacklist, boolean isWeekend, int nowMinutes,
+                              Settings s, int usedSecondsToday, int appLimitMinutes, int appUsedSeconds,
+                              boolean appOverridden, boolean scheduleOverridden) {
+        boolean appLimitBlocked = appLimitMinutes > 0 && appUsedSeconds >= appLimitMinutes * 60 && !appOverridden;
         boolean appBlocked = blacklist.contains(foregroundPackage) && !appOverridden;
         boolean scheduleBlocked = false;
         boolean quotaBlocked = false;
@@ -95,7 +110,7 @@ final class Rules {
                 quotaBlocked = true;
             }
         }
-        return new Decision(appBlocked, scheduleBlocked, quotaBlocked);
+        return new Decision(appBlocked, scheduleBlocked, quotaBlocked, appLimitBlocked);
     }
 
     static String clock(int minute, boolean h24) {

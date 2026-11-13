@@ -132,4 +132,28 @@ public class RulesTest {
         windows.add(new Rules.Window(16 * 60, 20 * 60));
         assertEquals("08:00-09:00, 16:00-20:00", Rules.describeWindows(windows, true));
     }
+
+    @Test
+    public void appLimit_blocksOnlyThatAppOnceItsOwnTimeIsUsed() {
+        Rules.Settings s = new Rules.Settings();
+        assertFalse(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 30, 29 * 60, false, false).blocked());
+        Rules.Decision d = Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 30, 30 * 60, false, false);
+        assertTrue(d.appLimitBlocked);
+        assertFalse(d.appBlocked);
+        assertFalse(d.scheduleBlocked);
+    }
+
+    @Test
+    public void appLimit_zeroMeansNone_andOverrideLiftsIt() {
+        Rules.Settings s = new Rules.Settings();
+        assertFalse(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 0, 999_999, false, false).blocked());
+        assertFalse(Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 30, 999_999, true, false).blocked());
+    }
+
+    @Test
+    public void appLimit_isIndependentOfTheScheduleOverride() {
+        Rules.Settings s = new Rules.Settings();
+        Rules.Decision d = Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 30, 31 * 60, false, true);
+        assertTrue(d.appLimitBlocked);
+    }
 }

@@ -32,10 +32,14 @@
     <string name="row_window_add">+ Add a window</string>
     <string name="row_quota">Daily limit</string>
     <string name="row_quota_detail">Total screen time allowed per day, outside Home. 0 = no limit.</string>
-    <string name="row_blacklist">Blocked apps</string>
+    <string name="row_blacklist">Apps: blocks and limits</string>
     <string name="row_blacklist_detail">The PIN can still unlock one, for a chosen time, from the lock screen.</string>
     <string name="row_change_pin">Change PIN</string>
     <string name="quota_unlimited">No limit</string>
     <string name="guard_disabled_warning">The guard is not enabled in Accessibility: nothing is enforced yet.</string>
-    <string name="blacklist_hint">Ticked apps are always sent back to Home.</string>
+    <string name="blacklist_hint">OK ticks an app to always block it    ◀ ▶ set its own daily limit</string>
+    <string name="app_limit_none">No limit</string>
+    <string name="app_limit_minutes">%1$d min/day</string>
+    <string name="lock_title_app_limit">This app's time is up for today</string>
+    <string name="lock_detail_app_limit">This app's %1$d minute limit for today is reached.</string>
 </resources>

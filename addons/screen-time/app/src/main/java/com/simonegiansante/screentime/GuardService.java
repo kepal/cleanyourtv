@@ -56,6 +56,7 @@ public class GuardService extends AccessibilityService {
 
     private void onTick() {
         Prefs.addUsedSeconds(this, TICK_SECONDS);
+        if (!ALWAYS_ALLOWED.contains(foregroundPackage)) Prefs.addAppUsedSeconds(this, foregroundPackage, TICK_SECONDS);
         check(foregroundPackage);
         if (!ALWAYS_ALLOWED.contains(foregroundPackage)) {
             main.postDelayed(tick, TICK_SECONDS * 1000L);
@@ -76,6 +77,8 @@ public class GuardService extends AccessibilityService {
                 Prefs.nowMinutes(),
                 s,
                 Prefs.usedSecondsToday(this),
+                Prefs.appLimitMinutes(this, pkg),
+                Prefs.appUsedSecondsToday(this, pkg),
                 Prefs.appOverrideUntil(this, pkg) > now,
                 Prefs.scheduleOverrideUntil(this) > now);
         if (!decision.blocked()) {
@@ -96,6 +99,7 @@ public class GuardService extends AccessibilityService {
             lock.putExtra(LockActivity.EXTRA_APP_BLOCKED, decision.appBlocked);
             lock.putExtra(LockActivity.EXTRA_SCHEDULE_BLOCKED, decision.scheduleBlocked);
             lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
+            lock.putExtra(LockActivity.EXTRA_APP_LIMIT_BLOCKED, decision.appLimitBlocked);
             lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(lock);
         }, 150);

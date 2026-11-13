@@ -8,6 +8,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-/** Every launchable app with its own icon, ticked for the ones GuardService always sends back to Home. */
+/** Every launchable app with its own icon: OK ticks it to be always sent back to Home, Left/Right set its own daily limit. */
 public class BlacklistActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,15 @@ public class BlacklistActivity extends Activity {
             label.setPadding(Math.round(16 * dp), 0, 0, 0);
             row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
+            TextView limit = new TextView(this);
+            limit.setTextSize(14);
+            limit.setTextColor(0xFFC9D1D9);
+            limit.setGravity(Gravity.END);
+            limit.setMinWidth(Math.round(120 * dp));
+            limit.setPadding(0, 0, Math.round(16 * dp), 0);
+            limit.setText(limitText(Prefs.appLimitMinutes(this, entry.packageName)));
+            row.addView(limit, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
             CheckBox box = new CheckBox(this);
             box.setFocusable(false);
             box.setClickable(false);
@@ -91,6 +101,17 @@ public class BlacklistActivity extends Activity {
                 Prefs.saveBlacklist(this, current);
             });
 
+            row.setOnKeyListener((v, code, e) -> {
+                if (code != KeyEvent.KEYCODE_DPAD_LEFT && code != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+                if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                    int step = code == KeyEvent.KEYCODE_DPAD_LEFT ? -Rules.QUOTA_STEP : Rules.QUOTA_STEP;
+                    int next = Rules.clamp(Prefs.appLimitMinutes(this, entry.packageName) + step, 0, Rules.DAY_MINUTES);
+                    Prefs.setAppLimitMinutes(this, entry.packageName, next);
+                    limit.setText(limitText(next));
+                }
+                return true;
+            });
+
             rows.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             if (first) {
                 row.requestFocus();
@@ -98,6 +119,10 @@ public class BlacklistActivity extends Activity {
             }
         }
         setContentView(page);
+    }
+
+    private String limitText(int minutes) {
+        return minutes == 0 ? getString(R.string.app_limit_none) : getString(R.string.app_limit_minutes, minutes);
     }
 
     private static final class AppEntry {

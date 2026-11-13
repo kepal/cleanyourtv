@@ -75,6 +75,37 @@ final class Prefs {
         of(c).edit().putStringSet("blacklist", packages).apply();
     }
 
+    // --- per-app daily limits ---
+
+    /** Minutes this one app may be used per day; 0 means no limit of its own. */
+    static int appLimitMinutes(Context c, String packageName) {
+        return of(c).getInt("app_limit_" + packageName, 0);
+    }
+
+    static void setAppLimitMinutes(Context c, String packageName, int minutes) {
+        SharedPreferences.Editor e = of(c).edit();
+        if (minutes <= 0) e.remove("app_limit_" + packageName);
+        else e.putInt("app_limit_" + packageName, Rules.clamp(minutes, 0, Rules.DAY_MINUTES));
+        e.apply();
+    }
+
+    /** Stored as "day|seconds" so each app's count starts over by itself on a new calendar day. */
+    static int appUsedSecondsToday(Context c, String packageName) {
+        String v = of(c).getString("app_usage_" + packageName, "");
+        String prefix = today() + "|";
+        if (!v.startsWith(prefix)) return 0;
+        try {
+            return Integer.parseInt(v.substring(prefix.length()));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    static void addAppUsedSeconds(Context c, String packageName, int seconds) {
+        int total = appUsedSecondsToday(c, packageName) + seconds;
+        of(c).edit().putString("app_usage_" + packageName, today() + "|" + total).apply();
+    }
+
     // --- PIN ---
 
     static boolean hasPin(Context c) {

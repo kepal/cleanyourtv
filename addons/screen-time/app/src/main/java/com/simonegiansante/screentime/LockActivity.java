@@ -27,8 +27,9 @@ public class LockActivity extends Activity {
     static final String EXTRA_APP_BLOCKED = "app_blocked";
     static final String EXTRA_SCHEDULE_BLOCKED = "schedule_blocked";
     static final String EXTRA_QUOTA_BLOCKED = "quota_blocked";
+    static final String EXTRA_APP_LIMIT_BLOCKED = "app_limit_blocked";
 
-    private boolean appBlocked, scheduleBlocked, quotaBlocked;
+    private boolean appBlocked, scheduleBlocked, quotaBlocked, appLimitBlocked;
     private String blockedPackage;
     private TextView error;
     private PinPad pad;
@@ -65,16 +66,20 @@ public class LockActivity extends Activity {
                 Prefs.nowMinutes(),
                 Prefs.loadSettings(this),
                 Prefs.usedSecondsToday(this),
+                Prefs.appLimitMinutes(this, pkg),
+                Prefs.appUsedSecondsToday(this, pkg),
                 Prefs.appOverrideUntil(this, pkg) > now,
                 Prefs.scheduleOverrideUntil(this) > now);
         if (!d.blocked()) {
             finish();
             return;
         }
-        if (d.appBlocked != appBlocked || d.scheduleBlocked != scheduleBlocked || d.quotaBlocked != quotaBlocked) {
+        if (d.appBlocked != appBlocked || d.scheduleBlocked != scheduleBlocked || d.quotaBlocked != quotaBlocked
+                || d.appLimitBlocked != appLimitBlocked) {
             appBlocked = d.appBlocked;
             scheduleBlocked = d.scheduleBlocked;
             quotaBlocked = d.quotaBlocked;
+            appLimitBlocked = d.appLimitBlocked;
             showLock();
         }
     }
@@ -84,6 +89,7 @@ public class LockActivity extends Activity {
         appBlocked = intent.getBooleanExtra(EXTRA_APP_BLOCKED, false);
         scheduleBlocked = intent.getBooleanExtra(EXTRA_SCHEDULE_BLOCKED, false);
         quotaBlocked = intent.getBooleanExtra(EXTRA_QUOTA_BLOCKED, false);
+        appLimitBlocked = intent.getBooleanExtra(EXTRA_APP_LIMIT_BLOCKED, false);
     }
 
     @Override
@@ -140,6 +146,7 @@ public class LockActivity extends Activity {
         if (appBlocked) parts.add(R.string.lock_title_app_blocked);
         if (scheduleBlocked) parts.add(R.string.lock_title_schedule);
         if (quotaBlocked) parts.add(R.string.lock_title_quota);
+        if (appLimitBlocked) parts.add(R.string.lock_title_app_limit);
         if (parts.size() == 1) return getString(parts.get(0));
         return getString(R.string.lock_title_multiple);
     }
@@ -156,6 +163,9 @@ public class LockActivity extends Activity {
         if (quotaBlocked) {
             Rules.Settings s = Prefs.loadSettings(this);
             lines.add(getString(R.string.lock_detail_quota, s.quotaMinutes));
+        }
+        if (appLimitBlocked && blockedPackage != null) {
+            lines.add(getString(R.string.lock_detail_app_limit, Prefs.appLimitMinutes(this, blockedPackage)));
         }
         lines.add(getString(R.string.lock_enter_pin_hint));
         return String.join("\n", lines);
@@ -218,7 +228,7 @@ public class LockActivity extends Activity {
         if (scheduleBlocked || quotaBlocked) {
             Prefs.setScheduleOverrideUntil(this, until);
         }
-        if (appBlocked && blockedPackage != null) {
+        if ((appBlocked || appLimitBlocked) && blockedPackage != null) {
             Prefs.setAppOverrideUntil(this, blockedPackage, until);
         }
         reopenBlockedApp();
