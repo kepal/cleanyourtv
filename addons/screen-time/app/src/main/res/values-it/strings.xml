@@ -37,7 +37,7 @@
     <string name="row_change_pin">Cambia PIN</string>
     <string name="quota_unlimited">Nessun limite</string>
     <string name="guard_disabled_warning">La guardia non è attiva in Accessibilità: nessuna regola è applicata.</string>
-    <string name="blacklist_hint">OK spunta un'app per bloccarla sempre    ◀ ▶ imposta il suo limite giornaliero</string>
+    <string name="blacklist_hint">OK spunta un\'app per bloccarla sempre    ◀ ▶ imposta il suo limite giornaliero</string>
     <string name="app_limit_none">Nessun limite</string>
     <string name="app_limit_minutes">%1$d min/giorno</string>
     <string name="lock_title_app_limit">Tempo di questa app esaurito per oggi</string>

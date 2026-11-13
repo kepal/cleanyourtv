@@ -40,6 +40,6 @@
     <string name="blacklist_hint">OK ticks an app to always block it    ◀ ▶ set its own daily limit</string>
     <string name="app_limit_none">No limit</string>
     <string name="app_limit_minutes">%1$d min/day</string>
-    <string name="lock_title_app_limit">This app's time is up for today</string>
-    <string name="lock_detail_app_limit">This app's %1$d minute limit for today is reached.</string>
+    <string name="lock_title_app_limit">This app\'s time is up for today</string>
+    <string name="lock_detail_app_limit">This app\'s %1$d minute limit for today is reached.</string>
 </resources>
