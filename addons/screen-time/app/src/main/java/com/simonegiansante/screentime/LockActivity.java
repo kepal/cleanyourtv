@@ -253,7 +253,14 @@ public class LockActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        goHome();
         finish();
+    }
+
+    private void goHome() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(home);
     }
 
     private LinearLayout.LayoutParams matchWidthWrap() {

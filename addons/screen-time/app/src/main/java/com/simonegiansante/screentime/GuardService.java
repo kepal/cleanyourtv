@@ -89,20 +89,16 @@ public class GuardService extends AccessibilityService {
         locked = true;
 
         main.removeCallbacks(tick);
-        performGlobalAction(GLOBAL_ACTION_HOME);
-        // GLOBAL_ACTION_HOME's own transition and this startActivity race on some firmware (seen on
-        // this Sony/MediaTek board): Home's own window settling afterwards can cover the lock screen
-        // that was already on top. A short delay lets Home finish first.
-        main.postDelayed(() -> {
-            Intent lock = new Intent(this, LockActivity.class);
-            lock.putExtra(LockActivity.EXTRA_PACKAGE, pkg);
-            lock.putExtra(LockActivity.EXTRA_APP_BLOCKED, decision.appBlocked);
-            lock.putExtra(LockActivity.EXTRA_SCHEDULE_BLOCKED, decision.scheduleBlocked);
-            lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
-            lock.putExtra(LockActivity.EXTRA_APP_LIMIT_BLOCKED, decision.appLimitBlocked);
-            lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(lock);
-        }, 150);
+        // No trip through Home first: the lock screen goes straight over the blocked app, which saves
+        // Home's own transition. LockActivity sends the person to Home itself when it is dismissed.
+        Intent lock = new Intent(this, LockActivity.class);
+        lock.putExtra(LockActivity.EXTRA_PACKAGE, pkg);
+        lock.putExtra(LockActivity.EXTRA_APP_BLOCKED, decision.appBlocked);
+        lock.putExtra(LockActivity.EXTRA_SCHEDULE_BLOCKED, decision.scheduleBlocked);
+        lock.putExtra(LockActivity.EXTRA_QUOTA_BLOCKED, decision.quotaBlocked);
+        lock.putExtra(LockActivity.EXTRA_APP_LIMIT_BLOCKED, decision.appLimitBlocked);
+        lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(lock);
     }
 
     @Override
