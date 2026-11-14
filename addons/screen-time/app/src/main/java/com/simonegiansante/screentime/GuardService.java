@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -17,6 +18,7 @@ import java.util.Set;
  */
 public class GuardService extends AccessibilityService {
     private static final int TICK_SECONDS = 20;
+    private static final int WARN_MINUTES = 5;
     /** Never evaluated: this app itself, and the launcher that Home must always be able to reach. */
     private static final Set<String> ALWAYS_ALLOWED = new HashSet<>();
 
@@ -32,10 +34,14 @@ public class GuardService extends AccessibilityService {
         a blocked app that keeps trying to reclaim focus must not relaunch the lock screen on top
         of itself over and over. */
     private boolean locked = false;
+    /** Warnings already shown, so each one appears once rather than on every tick. */
+    private final Set<String> warned = new HashSet<>();
+    private Banner banner;
 
     @Override
     protected void onServiceConnected() {
         ALWAYS_ALLOWED.add(getPackageName());
+        banner = new Banner(this);
     }
 
     @Override
@@ -58,6 +64,7 @@ public class GuardService extends AccessibilityService {
         Prefs.addUsedSeconds(this, TICK_SECONDS);
         if (!ALWAYS_ALLOWED.contains(foregroundPackage)) Prefs.addAppUsedSeconds(this, foregroundPackage, TICK_SECONDS);
         check(foregroundPackage);
+        if (!locked) warnIfClose(foregroundPackage);
         if (!ALWAYS_ALLOWED.contains(foregroundPackage)) {
             main.postDelayed(tick, TICK_SECONDS * 1000L);
         }
@@ -89,6 +96,7 @@ public class GuardService extends AccessibilityService {
         locked = true;
 
         main.removeCallbacks(tick);
+        if (banner != null) banner.hide();
         // No trip through Home first: the lock screen goes straight over the blocked app, which saves
         // Home's own transition. LockActivity sends the person to Home itself when it is dismissed.
         Intent lock = new Intent(this, LockActivity.class);
@@ -101,6 +109,37 @@ public class GuardService extends AccessibilityService {
         startActivity(lock);
     }
 
+    /** A banner over the app, never taking focus, when the schedule, the day's limit or this app's limit
+        is within WARN_MINUTES of blocking, so the block does not land in the middle of a video. */
+    private void warnIfClose(String pkg) {
+        if (ALWAYS_ALLOWED.contains(pkg) || banner == null) return;
+        long now = System.currentTimeMillis();
+        Rules.Settings s = Prefs.loadSettings(this);
+        String day = Prefs.todayKey();
+        if (Prefs.scheduleOverrideUntil(this) <= now) {
+            List<Rules.Window> windows = Prefs.isWeekendToday() ? s.weekendWindows : s.weekdayWindows;
+            int minutes = Rules.minutesUntilScheduleBlock(windows, Prefs.nowMinutes(), WARN_MINUTES);
+            if (minutes > 0) warnOnce("schedule:" + day + ":" + (Prefs.nowMinutes() + minutes), R.string.banner_schedule, minutes);
+            int quotaLeft = s.quotaMinutes * 60 - Prefs.usedSecondsToday(this);
+            if (s.quotaMinutes > 0 && quotaLeft > 0 && quotaLeft <= WARN_MINUTES * 60) {
+                warnOnce("quota:" + day, R.string.banner_quota, ceilMinutes(quotaLeft));
+            }
+        }
+        int limit = Prefs.appLimitMinutes(this, pkg);
+        if (limit > 0 && Prefs.appOverrideUntil(this, pkg) <= now) {
+            int left = limit * 60 - Prefs.appUsedSecondsToday(this, pkg);
+            if (left > 0 && left <= WARN_MINUTES * 60) warnOnce("app:" + pkg + ":" + day, R.string.banner_app_limit, ceilMinutes(left));
+        }
+    }
+
+    private void warnOnce(String key, int messageRes, int minutes) {
+        if (warned.add(key)) banner.show(getString(messageRes, minutes));
+    }
+
+    private static int ceilMinutes(int seconds) {
+        return (seconds + 59) / 60;
+    }
+
     @Override
     public void onInterrupt() {
     }
@@ -108,6 +147,7 @@ public class GuardService extends AccessibilityService {
     @Override
     public void onDestroy() {
         main.removeCallbacks(tick);
+        if (banner != null) banner.hide();
         super.onDestroy();
     }
 }

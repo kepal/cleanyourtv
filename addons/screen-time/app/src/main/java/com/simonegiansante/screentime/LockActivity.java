@@ -197,11 +197,28 @@ public class LockActivity extends Activity {
 
         page.addView(durationButton(R.string.lock_duration_15min, 15 * 60_000L), buttonParams(dp));
         page.addView(durationButton(R.string.lock_duration_1hour, 60 * 60_000L), buttonParams(dp));
-        boolean timeUsedUp = appBlocked || quotaBlocked || appLimitBlocked;
-        page.addView(durationButton(timeUsedUp ? R.string.lock_duration_until_midnight : R.string.lock_duration_until_reset, -1), buttonParams(dp));
+        page.addView(durationButton(scheduleOnly() ? R.string.lock_duration_until_next_window : R.string.lock_duration_until_midnight, -1), buttonParams(dp));
 
         setContentView(page);
         page.getChildAt(1).requestFocus();
+    }
+
+    /** Only the time-of-day schedule is blocking: nothing else resets at midnight, so the longest unlock
+        runs to the end of the next allowed window instead. */
+    private boolean scheduleOnly() {
+        return scheduleBlocked && !appBlocked && !quotaBlocked && !appLimitBlocked;
+    }
+
+    private long untilLongest() {
+        if (scheduleOnly()) {
+            Rules.Settings s = Prefs.loadSettings(this);
+            int minutes = Rules.minutesUntilNextWindowEnd(
+                    Prefs.isWeekendToday() ? s.weekendWindows : s.weekdayWindows,
+                    Prefs.isWeekendTomorrow() ? s.weekendWindows : s.weekdayWindows,
+                    Prefs.nowMinutes());
+            if (minutes > 0) return Prefs.millisAtMinutesFromNow(minutes);
+        }
+        return Prefs.endOfTodayMillis();
     }
 
     private LinearLayout.LayoutParams buttonParams(float dp) {
@@ -225,7 +242,7 @@ public class LockActivity extends Activity {
     }
 
     private void unlock(long durationMillis) {
-        long until = durationMillis < 0 ? Prefs.endOfTodayMillis() : System.currentTimeMillis() + durationMillis;
+        long until = durationMillis < 0 ? untilLongest() : System.currentTimeMillis() + durationMillis;
         if (scheduleBlocked || quotaBlocked) {
             Prefs.setScheduleOverrideUntil(this, until);
         }

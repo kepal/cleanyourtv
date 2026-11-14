@@ -113,6 +113,42 @@ final class Rules {
         return new Decision(appBlocked, scheduleBlocked, quotaBlocked, appLimitBlocked);
     }
 
+    /**
+     * Minutes from now until the first blocked minute, when that comes within horizon minutes and now is
+     * still allowed; -1 when nothing is about to end (no windows, already blocked, or beyond the horizon).
+     */
+    static int minutesUntilScheduleBlock(List<Window> windows, int nowMinutes, int horizon) {
+        if (windows.isEmpty() || !allowedByWindows(windows, nowMinutes)) return -1;
+        for (int m = 1; m <= horizon; m++) {
+            if (!allowedByWindows(windows, wrap(nowMinutes + m))) return m;
+        }
+        return -1;
+    }
+
+    /**
+     * Minutes from now to the end of the next allowed window: the next one still to start today, else the
+     * first one tomorrow. -1 when there is none (so the caller falls back to the end of the day).
+     */
+    static int minutesUntilNextWindowEnd(List<Window> today, List<Window> tomorrow, int nowMinutes) {
+        Window next = null;
+        for (Window w : today) {
+            if (w.start == w.end || w.start <= nowMinutes) continue;
+            if (next == null || w.start < next.start) next = w;
+        }
+        if (next != null) return next.start - nowMinutes + length(next);
+        Window first = null;
+        for (Window w : tomorrow) {
+            if (w.start == w.end) continue;
+            if (first == null || w.start < first.start) first = w;
+        }
+        if (first != null) return DAY_MINUTES - nowMinutes + first.start + length(first);
+        return -1;
+    }
+
+    private static int length(Window w) {
+        return w.end > w.start ? w.end - w.start : w.end + DAY_MINUTES - w.start;
+    }
+
     static String clock(int minute, boolean h24) {
         int h = minute / 60, m = minute % 60;
         if (h24) return String.format(Locale.ROOT, "%02d:%02d", h, m);

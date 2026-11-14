@@ -21,8 +21,12 @@
     <string name="lock_duration_title">Sblocca per quanto tempo?</string>
     <string name="lock_duration_15min">15 minuti</string>
     <string name="lock_duration_1hour">1 ora</string>
-    <string name="lock_duration_until_reset">Fino al prossimo reset</string>
+    <string name="lock_duration_until_next_window">Fino alla fine della prossima fascia</string>
     <string name="lock_duration_until_midnight">Fino a mezzanotte</string>
+
+    <string name="banner_schedule">Attenzione: il tempo consentito finisce tra %1$d min.</string>
+    <string name="banner_quota">Attenzione: il tempo schermo di oggi finisce tra %1$d min.</string>
+    <string name="banner_app_limit">Attenzione: il tempo di questa app per oggi finisce tra %1$d min.</string>
 
     <string name="settings_hint">◀ ▶ cambia    OK apre    Indietro chiude</string>
     <string name="section_weekday">Feriali</string>

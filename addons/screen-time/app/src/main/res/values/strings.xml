@@ -21,8 +21,12 @@
     <string name="lock_duration_title">Unlock for how long?</string>
     <string name="lock_duration_15min">15 minutes</string>
     <string name="lock_duration_1hour">1 hour</string>
-    <string name="lock_duration_until_reset">Until the next reset</string>
+    <string name="lock_duration_until_next_window">Until the end of the next window</string>
     <string name="lock_duration_until_midnight">Until midnight</string>
+
+    <string name="banner_schedule">Heads up: the allowed time ends in %1$d min.</string>
+    <string name="banner_quota">Heads up: today\'s screen time ends in %1$d min.</string>
+    <string name="banner_app_limit">Heads up: this app\'s time for today ends in %1$d min.</string>
 
     <string name="settings_hint">◀ ▶ change    OK opens    Back closes</string>
     <string name="section_weekday">Weekdays</string>

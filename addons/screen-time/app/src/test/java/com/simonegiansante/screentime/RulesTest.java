@@ -156,4 +156,52 @@ public class RulesTest {
         Rules.Decision d = Rules.evaluate("com.example.app", NO_BLACKLIST, false, 600, s, 0, 30, 31 * 60, false, true);
         assertTrue(d.appLimitBlocked);
     }
+
+    @Test
+    public void minutesUntilScheduleBlock_countsToTheEndOfTheWindow() {
+        java.util.List<Rules.Window> w = new java.util.ArrayList<>();
+        w.add(new Rules.Window(9 * 60, 12 * 60));
+        assertEquals(5, Rules.minutesUntilScheduleBlock(w, 11 * 60 + 55, 5));
+        assertEquals(-1, Rules.minutesUntilScheduleBlock(w, 11 * 60 + 40, 5));
+        assertEquals(-1, Rules.minutesUntilScheduleBlock(w, 13 * 60, 5));
+    }
+
+    @Test
+    public void minutesUntilScheduleBlock_adjacentWindowsAreNotAnEnd() {
+        java.util.List<Rules.Window> w = new java.util.ArrayList<>();
+        w.add(new Rules.Window(8 * 60, 9 * 60));
+        w.add(new Rules.Window(9 * 60, 10 * 60));
+        assertEquals(-1, Rules.minutesUntilScheduleBlock(w, 8 * 60 + 57, 5));
+        assertEquals(3, Rules.minutesUntilScheduleBlock(w, 9 * 60 + 57, 5));
+    }
+
+    @Test
+    public void minutesUntilScheduleBlock_noWindowsMeansNeverBlocked() {
+        assertEquals(-1, Rules.minutesUntilScheduleBlock(new java.util.ArrayList<>(), 600, 5));
+    }
+
+    @Test
+    public void nextWindowEnd_isTheNextOneStillToStartToday() {
+        java.util.List<Rules.Window> today = new java.util.ArrayList<>();
+        today.add(new Rules.Window(7 * 60, 7 * 60 + 55));
+        today.add(new Rules.Window(9 * 60, 12 * 60));
+        assertEquals(4 * 60 + 3, Rules.minutesUntilNextWindowEnd(today, new java.util.ArrayList<>(), 7 * 60 + 57));
+    }
+
+    @Test
+    public void nextWindowEnd_aWindowPastMidnightEndsTheNextMorning() {
+        java.util.List<Rules.Window> today = new java.util.ArrayList<>();
+        today.add(new Rules.Window(9 * 60, 2 * 60));
+        // at 08:00: 1 h to the start, then 17 h until 02:00 the next day
+        assertEquals(18 * 60, Rules.minutesUntilNextWindowEnd(today, new java.util.ArrayList<>(), 8 * 60));
+    }
+
+    @Test
+    public void nextWindowEnd_usesTomorrowWhenTodayIsOver() {
+        java.util.List<Rules.Window> tomorrow = new java.util.ArrayList<>();
+        tomorrow.add(new Rules.Window(7 * 60, 8 * 60));
+        // at 22:00: 2 h to midnight, 7 h to the start, 1 h long
+        assertEquals(10 * 60, Rules.minutesUntilNextWindowEnd(new java.util.ArrayList<>(), tomorrow, 22 * 60));
+        assertEquals(-1, Rules.minutesUntilNextWindowEnd(new java.util.ArrayList<>(), new java.util.ArrayList<>(), 22 * 60));
+    }
 }

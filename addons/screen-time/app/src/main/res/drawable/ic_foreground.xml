@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A clock face with a small padlock badge, inside the adaptive icon's safe zone. Own art. -->
+<!-- A progress ring (three quarters used, round ends) around a padlock, inside the adaptive icon's safe zone. Own art. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#3D7EFF" android:pathData="M48,52m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
-    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M48,52L48,34" />
-    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000" android:pathData="M48,52L61,59" />
-    <path android:fillColor="#0E1420" android:pathData="M68,64h22v22h-22z" />
-    <path android:strokeColor="#0E1420" android:strokeWidth="5" android:fillColor="#00000000" android:pathData="M74,64v-7a5,5 0,0 1,10 0v7" />
-    <path android:fillColor="#3D7EFF" android:pathData="M79,75m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
-    <path android:fillColor="#3D7EFF" android:pathData="M77,78h4v6h-4z" />
+    <path android:strokeColor="#22314D" android:strokeWidth="6" android:fillColor="#00000000"
+        android:pathData="M54,26a28,28 0,1 1,0 56a28,28 0,1 1,0 -56" />
+    <path android:strokeColor="#3D7EFF" android:strokeWidth="6" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M54,26A28,28 0,1 1,26 54" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.6" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M48,52v-5a6,6 0,0 1,12 0v5" />
+    <path android:fillColor="#FFFFFF" android:pathData="M47,52h14a3,3 0,0 1,3 3v10a3,3 0,0 1,-3 3h-14a3,3 0,0 1,-3 -3v-10a3,3 0,0 1,3 -3z" />
+    <path android:fillColor="#0E1420" android:pathData="M54,57.5m-2.4,0a2.4,2.4 0,1 1,4.8 0a2.4,2.4 0,1 1,-4.8 0" />
+    <path android:fillColor="#0E1420" android:pathData="M52.9,58.5h2.2l0.6,5h-3.4z" />
 </vector>

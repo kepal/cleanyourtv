@@ -129,9 +129,31 @@ final class Prefs {
         return DAY.format(new Date());
     }
 
+    /** The calendar day as text, for counters and warnings that start over each day. */
+    static String todayKey() {
+        return today();
+    }
+
     static boolean isWeekendToday() {
-        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+        return isWeekend(Calendar.getInstance());
+    }
+
+    static boolean isWeekendTomorrow() {
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_YEAR, 1);
+        return isWeekend(c);
+    }
+
+    private static boolean isWeekend(Calendar c) {
+        int day = c.get(Calendar.DAY_OF_WEEK);
         return day == Calendar.SATURDAY || day == Calendar.SUNDAY;
+    }
+
+    /** Epoch millis of the start of the current minute plus the given number of whole minutes from now. */
+    static long millisAtMinutesFromNow(int minutes) {
+        Calendar now = Calendar.getInstance();
+        long intoMinute = now.get(Calendar.SECOND) * 1000L + now.get(Calendar.MILLISECOND);
+        return now.getTimeInMillis() - intoMinute + minutes * 60_000L;
     }
 
     static int nowMinutes() {
