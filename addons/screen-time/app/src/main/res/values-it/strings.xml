@@ -22,6 +22,7 @@
     <string name="lock_duration_15min">15 minuti</string>
     <string name="lock_duration_1hour">1 ora</string>
     <string name="lock_duration_until_reset">Fino al prossimo reset</string>
+    <string name="lock_duration_until_midnight">Fino a mezzanotte</string>
 
     <string name="settings_hint">◀ ▶ cambia    OK apre    Indietro chiude</string>
     <string name="section_weekday">Feriali</string>

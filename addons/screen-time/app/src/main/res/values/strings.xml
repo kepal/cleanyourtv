@@ -22,6 +22,7 @@
     <string name="lock_duration_15min">15 minutes</string>
     <string name="lock_duration_1hour">1 hour</string>
     <string name="lock_duration_until_reset">Until the next reset</string>
+    <string name="lock_duration_until_midnight">Until midnight</string>
 
     <string name="settings_hint">◀ ▶ change    OK opens    Back closes</string>
     <string name="section_weekday">Weekdays</string>

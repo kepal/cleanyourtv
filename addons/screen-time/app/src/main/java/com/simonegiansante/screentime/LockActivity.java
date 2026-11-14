@@ -197,7 +197,8 @@ public class LockActivity extends Activity {
 
         page.addView(durationButton(R.string.lock_duration_15min, 15 * 60_000L), buttonParams(dp));
         page.addView(durationButton(R.string.lock_duration_1hour, 60 * 60_000L), buttonParams(dp));
-        page.addView(durationButton(R.string.lock_duration_until_reset, -1), buttonParams(dp));
+        boolean timeUsedUp = quotaBlocked || appLimitBlocked;
+        page.addView(durationButton(timeUsedUp ? R.string.lock_duration_until_midnight : R.string.lock_duration_until_reset, -1), buttonParams(dp));
 
         setContentView(page);
         page.getChildAt(1).requestFocus();
