@@ -37,6 +37,11 @@
     <string name="row_window_add">+ Aggiungi fascia</string>
     <string name="row_quota">Limite giornaliero</string>
     <string name="row_quota_detail">Tempo totale consentito al giorno, fuori dalla Home. 0 = nessun limite.</string>
+    <string name="row_usage">Uso di oggi</string>
+    <string name="row_usage_detail">Il tempo contato oggi per ogni app e l\'ultima cosa vista dal controllo.</string>
+    <string name="usage_total">Tutte le app oggi: %1$s</string>
+    <string name="usage_none">Ancora nulla di conteggiato oggi.</string>
+    <string name="usage_seen">Ultima finestra vista: %1$s alle %2$s    Ultimo conteggio: %3$s alle %4$s</string>
     <string name="row_blacklist">App: blocchi e limiti</string>
     <string name="row_blacklist_detail">Il PIN può comunque sbloccarne una, per un tempo scelto, dalla schermata di blocco.</string>
     <string name="row_change_pin">Cambia PIN</string>

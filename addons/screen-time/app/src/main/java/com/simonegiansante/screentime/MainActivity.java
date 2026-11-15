@@ -185,6 +185,9 @@ public class MainActivity extends Activity {
                 () -> startActivity(new Intent(this, BlacklistActivity.class)), null));
         blacklistRow.setValue(String.valueOf(Prefs.loadBlacklist(this).size()));
 
+        add(new Row(this, getString(R.string.row_usage), getString(R.string.row_usage_detail),
+                () -> startActivity(new Intent(this, UsageActivity.class)), null));
+
         Row pinRow = add(new Row(this, getString(R.string.row_change_pin), null,
                 () -> showPinScreen(R.string.gate_create_pin, null, this::onCreateFirstDigitsEntered), null));
         pinRow.setDetail(isGuardServiceEnabled() ? null : getString(R.string.guard_disabled_warning));

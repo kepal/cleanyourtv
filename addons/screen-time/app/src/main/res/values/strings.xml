@@ -37,6 +37,11 @@
     <string name="row_window_add">+ Add a window</string>
     <string name="row_quota">Daily limit</string>
     <string name="row_quota_detail">Total screen time allowed per day, outside Home. 0 = no limit.</string>
+    <string name="row_usage">Today\'s usage</string>
+    <string name="row_usage_detail">Time counted today for each app, and the last thing the guard saw.</string>
+    <string name="usage_total">All apps today: %1$s</string>
+    <string name="usage_none">Nothing counted yet today.</string>
+    <string name="usage_seen">Last window seen: %1$s at %2$s    Last count: %3$s at %4$s</string>
     <string name="row_blacklist">Apps: blocks and limits</string>
     <string name="row_blacklist_detail">The PIN can still unlock one, for a chosen time, from the lock screen.</string>
     <string name="row_change_pin">Change PIN</string>

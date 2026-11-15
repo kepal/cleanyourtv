@@ -44,6 +44,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".UsageActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".LockActivity"
             android:exported="false"
             android:launchMode="singleTask"

@@ -106,6 +106,44 @@ final class Prefs {
         of(c).edit().putString("app_usage_" + packageName, today() + "|" + total).apply();
     }
 
+    /** Every app counted today, with its seconds: what the statistics screen lists. */
+    static java.util.Map<String, Integer> appUsageToday(Context c) {
+        java.util.Map<String, Integer> out = new java.util.HashMap<>();
+        String prefix = today() + "|";
+        for (java.util.Map.Entry<String, ?> e : of(c).getAll().entrySet()) {
+            String key = e.getKey();
+            if (!key.startsWith("app_usage_") || !(e.getValue() instanceof String)) continue;
+            String v = (String) e.getValue();
+            if (!v.startsWith(prefix)) continue;
+            try {
+                out.put(key.substring("app_usage_".length()), Integer.parseInt(v.substring(prefix.length())));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return out;
+    }
+
+    /** Packages that have their own daily limit, so the statistics can show one that never got counted. */
+    static java.util.Map<String, Integer> appLimits(Context c) {
+        java.util.Map<String, Integer> out = new java.util.HashMap<>();
+        for (java.util.Map.Entry<String, ?> e : of(c).getAll().entrySet()) {
+            String key = e.getKey();
+            if (key.startsWith("app_limit_") && e.getValue() instanceof Integer) {
+                out.put(key.substring("app_limit_".length()), (Integer) e.getValue());
+            }
+        }
+        return out;
+    }
+
+    /** What the service saw last, for the statistics screen: the package of the last window event and when. */
+    static void setLastEvent(Context c, String packageName) {
+        of(c).edit().putString("last_event_pkg", packageName).putLong("last_event_at", System.currentTimeMillis()).apply();
+    }
+
+    static void setLastTick(Context c, String packageName) {
+        of(c).edit().putString("last_tick_pkg", packageName).putLong("last_tick_at", System.currentTimeMillis()).apply();
+    }
+
     // --- PIN ---
 
     static boolean hasPin(Context c) {

@@ -55,6 +55,7 @@ public class GuardService extends AccessibilityService {
         if ("com.android.systemui".contentEquals(pkg)) return;
         String previous = foregroundPackage;
         foregroundPackage = pkg.toString();
+        if (!previous.equals(foregroundPackage)) Prefs.setLastEvent(this, foregroundPackage);
         check(foregroundPackage);
         if (ALWAYS_ALLOWED.contains(foregroundPackage)) {
             main.removeCallbacks(tick);
@@ -74,6 +75,7 @@ public class GuardService extends AccessibilityService {
         tickPending = false;
         Prefs.addUsedSeconds(this, TICK_SECONDS);
         if (!ALWAYS_ALLOWED.contains(foregroundPackage)) Prefs.addAppUsedSeconds(this, foregroundPackage, TICK_SECONDS);
+        Prefs.setLastTick(this, foregroundPackage);
         check(foregroundPackage);
         if (!locked) warnIfClose(foregroundPackage);
         if (!ALWAYS_ALLOWED.contains(foregroundPackage)) {
