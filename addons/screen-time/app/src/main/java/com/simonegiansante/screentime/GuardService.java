@@ -102,6 +102,13 @@ public class GuardService extends AccessibilityService {
         // Volume bar, panels and notifications draw over the app without replacing it, and raise no
         // event when they go away: letting one stand in as "the app in front" would stop the timer.
         if ("com.android.systemui".contentEquals(pkg)) return;
+        // Our own warning banner is a window of this app too, but not a screen the person went to:
+        // taking it for one would stop the counting for the app underneath. Only this app's own
+        // activities (the settings, the lock screen) count as being in front.
+        if (getPackageName().contentEquals(pkg)) {
+            CharSequence cls = event.getClassName();
+            if (cls == null || !cls.toString().startsWith(getPackageName())) return;
+        }
         // The time up to this event belongs to the app that was in front until now.
         account();
         String previous = foregroundPackage;
