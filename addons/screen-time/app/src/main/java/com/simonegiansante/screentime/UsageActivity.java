@@ -25,6 +25,18 @@ import java.util.Set;
  */
 public class UsageActivity extends Activity {
     @Override
+    protected void onStart() {
+        super.onStart();
+        Session.started();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Session.stopped();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         float dp = getResources().getDisplayMetrics().density;

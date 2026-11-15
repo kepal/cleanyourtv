@@ -25,6 +25,18 @@ import java.util.TreeMap;
 /** Every launchable app with its own icon: OK ticks it to be always sent back to Home, Left/Right set its own daily limit. */
 public class BlacklistActivity extends Activity {
     @Override
+    protected void onStart() {
+        super.onStart();
+        Session.started();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Session.stopped();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         float dp = getResources().getDisplayMetrics().density;

@@ -31,7 +31,20 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        showGate();
+        if (Session.isUnlocked()) showSettings();
+        else showGate();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Session.started();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Session.stopped();
     }
 
     /** Lets the remote's own number keys type a PIN, not only moving focus to the grid. */
@@ -63,6 +76,7 @@ public class MainActivity extends Activity {
 
     private void onGatePinEntered(String pin, TextView error, PinPad pad) {
         if (Prefs.checkPin(this, pin)) {
+            Session.unlock();
             showSettings();
         } else {
             error.setText(R.string.lock_wrong_pin);
@@ -79,6 +93,7 @@ public class MainActivity extends Activity {
         if (pin.equals(pendingPin)) {
             Prefs.setPin(this, pin);
             pendingPin = null;
+            Session.unlock();
             showSettings();
         } else {
             pendingPin = null;
