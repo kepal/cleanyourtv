@@ -3,7 +3,11 @@ package com.simonegiansante.screentime;
 import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
 import android.os.Handler;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -34,7 +38,7 @@ public class GuardService extends AccessibilityService {
     private boolean tickPending = false;
     /** Clock time (elapsedRealtime) up to which usage is already counted; 0 while no counted app is in front. */
     private long accountedAt = 0L;
-    private static final int MAX_GAP_SECONDS = 60;
+    private static final int MAX_GAP_SECONDS = 120;
     /** Set the moment the lock screen is launched, cleared once an allowed app is in front again:
         a blocked app that keeps trying to reclaim focus must not relaunch the lock screen on top
         of itself over and over. */
@@ -43,10 +47,51 @@ public class GuardService extends AccessibilityService {
     private final Set<String> warned = new HashSet<>();
     private Banner banner;
 
+    private PowerManager.WakeLock awake;
+    private final BroadcastReceiver screen = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                // The TV went to standby: that time is not spent in the app.
+                account();
+                accountedAt = 0L;
+                main.removeCallbacks(tick);
+                tickPending = false;
+                holdAwake(false);
+            } else if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())
+                    && !foregroundPackage.isEmpty() && !ALWAYS_ALLOWED.contains(foregroundPackage) && !locked) {
+                accountedAt = SystemClock.elapsedRealtime();
+                holdAwake(true);
+                if (!tickPending) {
+                    main.postDelayed(tick, TICK_SECONDS * 1000L);
+                    tickPending = true;
+                }
+            }
+        }
+    };
+
     @Override
     protected void onServiceConnected() {
         ALWAYS_ALLOWED.add(getPackageName());
         banner = new Banner(this);
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        awake = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "screentime:guard");
+        awake.setReferenceCounted(false);
+        IntentFilter f = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        f.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(screen, f);
+    }
+
+    /** While a counted app is in front the CPU is kept awake, so the tick keeps firing even when the
+        picture is static (an app's home screen): a timer on a sleeping CPU stops and time goes uncounted.
+        The timeout makes sure it can never be left held. */
+    private void holdAwake(boolean on) {
+        if (awake == null) return;
+        try {
+            if (on) awake.acquire(2 * 60 * 1000L);
+            else if (awake.isHeld()) awake.release();
+        } catch (RuntimeException ignored) {
+        }
     }
 
     @Override
@@ -66,10 +111,12 @@ public class GuardService extends AccessibilityService {
             accountedAt = 0L;
             main.removeCallbacks(tick);
             tickPending = false;
+            holdAwake(false);
             check(foregroundPackage);
             return;
         }
         if (accountedAt == 0L) accountedAt = SystemClock.elapsedRealtime();
+        holdAwake(true);
         check(foregroundPackage);
         // The tick runs by itself and is never restarted by an event: an app that keeps raising window
         // events (or swapping between its own packages) would otherwise keep it from ever firing.
@@ -102,6 +149,7 @@ public class GuardService extends AccessibilityService {
         check(foregroundPackage);
         if (!locked) warnIfClose(foregroundPackage);
         if (!locked && !ALWAYS_ALLOWED.contains(foregroundPackage)) {
+            holdAwake(true);
             main.postDelayed(tick, TICK_SECONDS * 1000L);
             tickPending = true;
         }
@@ -135,6 +183,7 @@ public class GuardService extends AccessibilityService {
         main.removeCallbacks(tick);
         tickPending = false;
         accountedAt = 0L;
+        holdAwake(false);
         if (banner != null) banner.hide();
         // No trip through Home first: the lock screen goes straight over the blocked app, which saves
         // Home's own transition. LockActivity sends the person to Home itself when it is dismissed.
@@ -186,6 +235,11 @@ public class GuardService extends AccessibilityService {
     @Override
     public void onDestroy() {
         main.removeCallbacks(tick);
+        holdAwake(false);
+        try {
+            unregisterReceiver(screen);
+        } catch (RuntimeException ignored) {
+        }
         if (banner != null) banner.hide();
         super.onDestroy();
     }
