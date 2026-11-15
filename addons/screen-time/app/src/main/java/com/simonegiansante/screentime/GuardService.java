@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.HashSet;
@@ -31,6 +32,9 @@ public class GuardService extends AccessibilityService {
     private String foregroundPackage = "";
     private final Runnable tick = this::onTick;
     private boolean tickPending = false;
+    /** Clock time (elapsedRealtime) up to which usage is already counted; 0 while no counted app is in front. */
+    private long accountedAt = 0L;
+    private static final int MAX_GAP_SECONDS = 60;
     /** Set the moment the lock screen is launched, cleared once an allowed app is in front again:
         a blocked app that keeps trying to reclaim focus must not relaunch the lock screen on top
         of itself over and over. */
@@ -53,32 +57,51 @@ public class GuardService extends AccessibilityService {
         // Volume bar, panels and notifications draw over the app without replacing it, and raise no
         // event when they go away: letting one stand in as "the app in front" would stop the timer.
         if ("com.android.systemui".contentEquals(pkg)) return;
+        // The time up to this event belongs to the app that was in front until now.
+        account();
         String previous = foregroundPackage;
         foregroundPackage = pkg.toString();
         if (!previous.equals(foregroundPackage)) Prefs.setLastEvent(this, foregroundPackage);
-        check(foregroundPackage);
         if (ALWAYS_ALLOWED.contains(foregroundPackage)) {
+            accountedAt = 0L;
             main.removeCallbacks(tick);
             tickPending = false;
+            check(foregroundPackage);
             return;
         }
-        // Same app raising more window events (a player, a dialog, a splash): leave the running timer
-        // alone. Restarting it on every event would keep it from ever reaching TICK_SECONDS, and the
-        // time used would never be counted.
-        if (tickPending && previous.equals(foregroundPackage)) return;
-        main.removeCallbacks(tick);
-        main.postDelayed(tick, TICK_SECONDS * 1000L);
-        tickPending = true;
+        if (accountedAt == 0L) accountedAt = SystemClock.elapsedRealtime();
+        check(foregroundPackage);
+        // The tick runs by itself and is never restarted by an event: an app that keeps raising window
+        // events (or swapping between its own packages) would otherwise keep it from ever firing.
+        if (!tickPending && !locked) {
+            main.postDelayed(tick, TICK_SECONDS * 1000L);
+            tickPending = true;
+        }
+    }
+
+    /** Adds the real time elapsed since the last accounting to today's totals and to the app in front.
+        Measured on the clock, not counted in ticks, so how often the tick fires does not change it. */
+    private void account() {
+        long now = SystemClock.elapsedRealtime();
+        if (accountedAt == 0L || ALWAYS_ALLOWED.contains(foregroundPackage) || foregroundPackage.isEmpty()) {
+            return;
+        }
+        long seconds = (now - accountedAt) / 1000L;
+        if (seconds <= 0) return;
+        accountedAt += seconds * 1000L;
+        // A long gap means the TV slept: that was not time spent in the app.
+        int counted = (int) Math.min(seconds, MAX_GAP_SECONDS);
+        Prefs.addUsedSeconds(this, counted);
+        Prefs.addAppUsedSeconds(this, foregroundPackage, counted);
     }
 
     private void onTick() {
         tickPending = false;
-        Prefs.addUsedSeconds(this, TICK_SECONDS);
-        if (!ALWAYS_ALLOWED.contains(foregroundPackage)) Prefs.addAppUsedSeconds(this, foregroundPackage, TICK_SECONDS);
+        account();
         Prefs.setLastTick(this, foregroundPackage);
         check(foregroundPackage);
         if (!locked) warnIfClose(foregroundPackage);
-        if (!ALWAYS_ALLOWED.contains(foregroundPackage)) {
+        if (!locked && !ALWAYS_ALLOWED.contains(foregroundPackage)) {
             main.postDelayed(tick, TICK_SECONDS * 1000L);
             tickPending = true;
         }
@@ -111,6 +134,7 @@ public class GuardService extends AccessibilityService {
 
         main.removeCallbacks(tick);
         tickPending = false;
+        accountedAt = 0L;
         if (banner != null) banner.hide();
         // No trip through Home first: the lock screen goes straight over the blocked app, which saves
         // Home's own transition. LockActivity sends the person to Home itself when it is dismissed.
