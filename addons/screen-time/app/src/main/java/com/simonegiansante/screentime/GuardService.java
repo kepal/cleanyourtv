@@ -111,6 +111,10 @@ public class GuardService extends AccessibilityService {
             CharSequence cls = event.getClassName();
             if (cls == null || !cls.toString().startsWith(getPackageName())) return;
         }
+        // A system service (the Sony one, an input method, a Play Services dialog) opens windows of its
+        // own while an app plays. It is not an app the person opened, and counting it as "the app in
+        // front" took the time away from the real one. Only packages with a launcher entry count.
+        if (!isRealApp(pkg.toString())) return;
         // The time up to this event belongs to the app that was in front until now.
         account();
         String previous = foregroundPackage;
@@ -155,6 +159,20 @@ public class GuardService extends AccessibilityService {
         int counted = (int) Math.min(seconds, MAX_GAP_SECONDS);
         Prefs.addUsedSeconds(this, counted);
         Prefs.addAppUsedSeconds(this, foregroundPackage, counted);
+    }
+
+    private final java.util.Map<String, Boolean> realApps = new java.util.HashMap<>();
+
+    /** An app that can be opened from a launcher (leanback or ordinary), or one of the always-allowed
+        packages that must still be seen to reset the counting. */
+    private boolean isRealApp(String pkg) {
+        if (ALWAYS_ALLOWED.contains(pkg)) return true;
+        Boolean cached = realApps.get(pkg);
+        if (cached != null) return cached;
+        android.content.pm.PackageManager pm = getPackageManager();
+        boolean real = pm.getLeanbackLaunchIntentForPackage(pkg) != null || pm.getLaunchIntentForPackage(pkg) != null;
+        realApps.put(pkg, real);
+        return real;
     }
 
     /** True while the TV is in standby (screen off). Some sets never send the screen-off broadcast, or send
