@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.hardware.display.DisplayManager;
+import android.view.Display;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -122,6 +124,12 @@ public class GuardService extends AccessibilityService {
             check(foregroundPackage);
             return;
         }
+        if (standby()) {
+            accountedAt = 0L;
+            holdAwake(false);
+            check(foregroundPackage);
+            return;
+        }
         if (accountedAt == 0L) accountedAt = SystemClock.elapsedRealtime();
         holdAwake(true);
         check(foregroundPackage);
@@ -149,8 +157,35 @@ public class GuardService extends AccessibilityService {
         Prefs.addAppUsedSeconds(this, foregroundPackage, counted);
     }
 
+    /** True while the TV is in standby (screen off). Some sets never send the screen-off broadcast, or send
+        it before this service listens; asking the system on every tick means the standby hours are never
+        counted and the CPU is never kept awake for an app nobody is watching. */
+    private boolean standby() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm != null && !pm.isInteractive()) return true;
+        DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+        Display d = dm == null ? null : dm.getDisplay(Display.DEFAULT_DISPLAY);
+        if (d == null) return false;
+        int state = d.getState();
+        return state == Display.STATE_OFF || state == Display.STATE_DOZE || state == Display.STATE_DOZE_SUSPEND;
+    }
+
     private void onTick() {
         tickPending = false;
+        if (standby()) {
+            accountedAt = 0L;
+            holdAwake(false);
+            // Keep looking now and then without holding the CPU: a set that wakes without a window event
+            // or a screen-on broadcast would otherwise never be counted again.
+            if (!locked && !ALWAYS_ALLOWED.contains(foregroundPackage)) {
+                main.postDelayed(tick, 60_000L);
+                tickPending = true;
+            }
+            return;
+        }
+        if (accountedAt == 0L && !locked && !foregroundPackage.isEmpty() && !ALWAYS_ALLOWED.contains(foregroundPackage)) {
+            accountedAt = SystemClock.elapsedRealtime();
+        }
         account();
         Prefs.setLastTick(this, foregroundPackage);
         check(foregroundPackage);
